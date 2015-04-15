@@ -54,6 +54,7 @@ import ws.wamp.jawampa.internal.IdValidator;
 import ws.wamp.jawampa.internal.Promise;
 import ws.wamp.jawampa.internal.UriValidator;
 import ws.wamp.jawampa.messages.CallMessage;
+import ws.wamp.jawampa.messages.EventMessage;
 import ws.wamp.jawampa.messages.GoodbyeMessage;
 import ws.wamp.jawampa.messages.HelloMessage;
 import ws.wamp.jawampa.messages.PublishMessage;
@@ -184,9 +185,9 @@ public class WampClient {
     private HashMap<Long, RequestMapEntry> requestMap = 
         new HashMap<Long, WampClient.RequestMapEntry>();
     
-    public HashMap<String, SubscriptionMapEntry> subscriptionsByUri =
+    private HashMap<String, SubscriptionMapEntry> subscriptionsByUri =
         new HashMap<String, SubscriptionMapEntry>();
-    public HashMap<Long, SubscriptionMapEntry> subscriptionsBySubscriptionId =
+    private HashMap<Long, SubscriptionMapEntry> subscriptionsBySubscriptionId =
         new HashMap<Long, SubscriptionMapEntry>();
     
     public HashMap<String, RegisteredProceduresMapEntry> registeredProceduresByUri = 
@@ -488,6 +489,16 @@ public class WampClient {
         remainingNrReconnects = totalNrReconnects;
         status = Status.Connected;
         statusObservable.onNext(status);
+    }
+
+    public void onEvent( EventMessage ev ) {
+        WampClient.SubscriptionMapEntry entry = subscriptionsBySubscriptionId.get(ev.subscriptionId);
+        if (entry == null || entry.state != PubSubState.Subscribed) return; // Ignore the result
+        PubSubData evResult = new PubSubData(ev.arguments, ev.argumentsKw);
+        // publish the event
+        for (Subscriber<? super PubSubData> s : entry.subscribers) {
+            s.onNext(evResult);
+        }
     }
 
     public <ReplyT> void onSuccessfulReply(long requestId, long expectedId, ReplyT reply) {
