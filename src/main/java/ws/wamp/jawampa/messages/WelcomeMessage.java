@@ -64,21 +64,20 @@ public class WelcomeMessage extends WampMessage {
             return;
         }
 
-        client.routerRoles = null;
         Set<WampRoles> rroles = new HashSet<WampRoles>();
         Iterator<String> roleKeys = roleNode.fieldNames();
         while (roleKeys.hasNext()) {
             WampRoles role = WampRoles.fromString(roleKeys.next());
             if (role != null) rroles.add(role);
         }
-        client.routerRoles = new WampRoles[rroles.size()];
+        WampRoles[] routerRoles = new WampRoles[rroles.size()];
         int i = 0;
         for (WampRoles r : rroles) {
-            client.routerRoles[i] = r; 
+            routerRoles[i] = r;
             i++;
         }
 
-        client.onConnectionEstablished(details, sessionId);
+        client.onConnectionEstablished(details, sessionId, routerRoles);
     }
 
     @Override

@@ -131,8 +131,8 @@ public class WampClient {
     
     private long sessionId;
     private ObjectNode welcomeDetails = null;
-    final WampRoles[] clientRoles;
-    public WampRoles[] routerRoles;
+    private final WampRoles[] clientRoles;
+    private WampRoles[] routerRoles;
     
     public enum PubSubState {
         Subscribing,
@@ -481,9 +481,10 @@ public class WampClient {
         return statusObservable;
     }
     
-    public void onConnectionEstablished(ObjectNode welcomeDetails, long sessionId) {
+    public void onConnectionEstablished(ObjectNode welcomeDetails, long sessionId, WampRoles[] routerRoles) {
         this.welcomeDetails = welcomeDetails;
         this.sessionId = sessionId;
+        this.routerRoles = routerRoles;
         remainingNrReconnects = totalNrReconnects;
         status = Status.Connected;
         statusObservable.onNext(status);
