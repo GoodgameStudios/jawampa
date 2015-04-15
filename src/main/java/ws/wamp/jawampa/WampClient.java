@@ -101,10 +101,10 @@ public class WampClient {
     private final EventLoopGroup eventLoop;
     private final Scheduler scheduler;
     
-    final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    final URI routerUri;
-    final String realm;
+    private final URI routerUri;
+    private final String realm;
     
     /** Returns the URI of the router to which this client is connected */
     public URI routerUri() {
@@ -116,8 +116,8 @@ public class WampClient {
         return realm;
     }
     
-    final boolean closeClientOnErrors;
-    boolean isCompleted = false;
+    private final boolean closeClientOnErrors;
+    private boolean isCompleted = false;
 
     /** The factory which is used to create new transports to the remote peer */
     final WampClientChannelFactory channelFactory;
