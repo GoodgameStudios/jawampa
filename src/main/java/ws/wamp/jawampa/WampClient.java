@@ -129,8 +129,8 @@ public class WampClient {
     private int remainingNrReconnects = 0;
     Subscription reconnectSubscription;
     
-    public long sessionId;
-    public ObjectNode welcomeDetails = null;
+    private long sessionId;
+    private ObjectNode welcomeDetails = null;
     final WampRoles[] clientRoles;
     public WampRoles[] routerRoles;
     
@@ -481,7 +481,9 @@ public class WampClient {
         return statusObservable;
     }
     
-    public void onConnectionEstablished() {
+    public void onConnectionEstablished(ObjectNode welcomeDetails, long sessionId) {
+        this.welcomeDetails = welcomeDetails;
+        this.sessionId = sessionId;
         remainingNrReconnects = totalNrReconnects;
         status = Status.Connected;
         statusObservable.onNext(status);

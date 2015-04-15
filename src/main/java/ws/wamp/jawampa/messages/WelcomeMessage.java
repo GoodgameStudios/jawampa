@@ -56,8 +56,6 @@ public class WelcomeMessage extends WampMessage {
     @Override
     public void onMessageBeforeWelcome( WampClient client ) {
         // Receive a welcome. Now the session is established!
-        client.welcomeDetails = details;
-        client.sessionId = sessionId;
 
         // Extract the roles of the remote side
         JsonNode roleNode = details.get("roles");
@@ -80,7 +78,7 @@ public class WelcomeMessage extends WampMessage {
             i++;
         }
 
-        client.onConnectionEstablished();
+        client.onConnectionEstablished(details, sessionId);
     }
 
     @Override
