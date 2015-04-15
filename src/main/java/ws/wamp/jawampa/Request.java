@@ -116,7 +116,7 @@ public class Request {
                                                   requestId, null, errorUri,
                                                   arguments, keywordArguments);
          
-        client.scheduler.createWorker().schedule(new Action0() {
+        client.schedule(new Action0() {
             @Override
             public void call() {
                 if (client.channel != channel) return;
@@ -139,7 +139,7 @@ public class Request {
         final YieldMessage msg = new YieldMessage(requestId, null,
                                                   arguments, keywordArguments);
          
-        client.scheduler.createWorker().schedule(new Action0() {
+        client.schedule(new Action0() {
             @Override
             public void call() {
                 if (client.channel != channel) return;

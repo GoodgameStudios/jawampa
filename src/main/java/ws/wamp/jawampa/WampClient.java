@@ -98,8 +98,8 @@ public class WampClient {
     private Status status = Status.Disconnected;
     private BehaviorSubject<Status> statusObservable = BehaviorSubject.create(Status.Disconnected);
     
-    final EventLoopGroup eventLoop;
-    final Scheduler scheduler;
+    private final EventLoopGroup eventLoop;
+    private final Scheduler scheduler;
     
     final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -1217,4 +1217,7 @@ public class WampClient {
         return p.getFuture();
     }
 
+    public void schedule(Action0 action) {
+        scheduler.createWorker().schedule( action );
+    }
 }
