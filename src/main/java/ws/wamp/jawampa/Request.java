@@ -20,7 +20,6 @@ import io.netty.channel.Channel;
 
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
-import rx.functions.Action0;
 import ws.wamp.jawampa.internal.UriValidator;
 import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
@@ -115,14 +114,8 @@ public class Request {
         final ErrorMessage msg = new ErrorMessage(InvocationMessage.ID, 
                                                   requestId, null, errorUri,
                                                   arguments, keywordArguments);
-         
-        client.schedule(new Action0() {
-            @Override
-            public void call() {
-                if (client.channel != channel) return;
-                channel.writeAndFlush(msg);
-            }
-        });
+
+        client.scheduleMessage( msg );
     }
     
     /**
@@ -138,14 +131,8 @@ public class Request {
         
         final YieldMessage msg = new YieldMessage(requestId, null,
                                                   arguments, keywordArguments);
-         
-        client.schedule(new Action0() {
-            @Override
-            public void call() {
-                if (client.channel != channel) return;
-                channel.writeAndFlush(msg);
-            }
-        });
+
+        client.scheduleMessage( msg );
     }
     
     /**

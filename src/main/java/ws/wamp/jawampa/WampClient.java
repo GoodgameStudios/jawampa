@@ -120,8 +120,8 @@ public class WampClient {
     private boolean isCompleted = false;
 
     /** The factory which is used to create new transports to the remote peer */
-    final WampClientChannelFactory channelFactory;
-    public Channel channel;
+    private final WampClientChannelFactory channelFactory;
+    private Channel channel;
     ChannelFuture connectFuture;
     SessionHandler handler;
     
@@ -1217,7 +1217,12 @@ public class WampClient {
         return p.getFuture();
     }
 
-    public void schedule(Action0 action) {
-        scheduler.createWorker().schedule( action );
+    public void scheduleMessage( final WampMessage msg ) {
+        scheduler.createWorker().schedule( new Action0() {
+            @Override
+            public void call() {
+                channel.writeAndFlush(msg);
+            }
+        } );
     }
 }

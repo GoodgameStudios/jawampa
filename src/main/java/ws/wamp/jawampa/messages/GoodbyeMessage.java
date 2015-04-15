@@ -51,7 +51,7 @@ public class GoodbyeMessage extends WampMessage {
     @Override
     public void onMessage( WampClient client ) {
         // Reply the goodbye
-        client.channel.writeAndFlush(new GoodbyeMessage(null, ApplicationError.GOODBYE_AND_OUT));
+        client.scheduleMessage(new GoodbyeMessage(null, ApplicationError.GOODBYE_AND_OUT));
         // We could also use the reason from the msg, but this would be harder
         // to determinate from a "real" error
         client.onSessionError(new ApplicationError(ApplicationError.GOODBYE_AND_OUT));
