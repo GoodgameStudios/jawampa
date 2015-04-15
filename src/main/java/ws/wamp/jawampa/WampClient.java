@@ -54,9 +54,11 @@ import ws.wamp.jawampa.internal.IdValidator;
 import ws.wamp.jawampa.internal.Promise;
 import ws.wamp.jawampa.internal.UriValidator;
 import ws.wamp.jawampa.messages.CallMessage;
+import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.EventMessage;
 import ws.wamp.jawampa.messages.GoodbyeMessage;
 import ws.wamp.jawampa.messages.HelloMessage;
+import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.PublishMessage;
 import ws.wamp.jawampa.messages.RegisterMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
@@ -190,9 +192,9 @@ public class WampClient {
     private HashMap<Long, SubscriptionMapEntry> subscriptionsBySubscriptionId =
         new HashMap<Long, SubscriptionMapEntry>();
     
-    public HashMap<String, RegisteredProceduresMapEntry> registeredProceduresByUri = 
+    private HashMap<String, RegisteredProceduresMapEntry> registeredProceduresByUri = 
             new HashMap<String, RegisteredProceduresMapEntry>();
-    public HashMap<Long, RegisteredProceduresMapEntry> registeredProceduresById = 
+    private HashMap<Long, RegisteredProceduresMapEntry> registeredProceduresById = 
             new HashMap<Long, RegisteredProceduresMapEntry>();
     
     
@@ -498,6 +500,20 @@ public class WampClient {
         // publish the event
         for (Subscriber<? super PubSubData> s : entry.subscribers) {
             s.onNext(evResult);
+        }
+    }
+
+    public void onInvocation( InvocationMessage iv ) {
+        RegisteredProceduresMapEntry entry = registeredProceduresById.get(iv.registrationId);
+        if (entry == null || entry.state != RegistrationState.Registered) {
+            // Send an error that we are no longer registered
+            channel.writeAndFlush(new ErrorMessage(InvocationMessage.ID, iv.requestId, null,
+                                  ApplicationError.NO_SUCH_PROCEDURE, null, null));
+        }
+        else {
+            // Send the request to the subscriber, which can then send responses
+            Request request = new Request(this, channel, iv.requestId, iv.arguments, iv.argumentsKw);
+            entry.subscriber.onNext(request);
         }
     }
 

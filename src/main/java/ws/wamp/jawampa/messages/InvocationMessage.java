@@ -1,11 +1,8 @@
 package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.Request;
 import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
-import ws.wamp.jawampa.WampClient.RegisteredProceduresMapEntry;
-import ws.wamp.jawampa.WampClient.RegistrationState;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -87,16 +84,6 @@ public class InvocationMessage extends WampMessage {
 
     @Override
     public void onMessage( WampClient client ) {
-        RegisteredProceduresMapEntry entry = client.registeredProceduresById.get(registrationId);
-        if (entry == null || entry.state != RegistrationState.Registered) {
-            // Send an error that we are no longer registered
-            client.channel.writeAndFlush(new ErrorMessage(InvocationMessage.ID, requestId, null,
-                                  ApplicationError.NO_SUCH_PROCEDURE, null, null));
-        }
-        else {
-            // Send the request to the subscriber, which can then send responses
-            Request request = new Request(client, client.channel, requestId, arguments, argumentsKw);
-            entry.subscriber.onNext(request);
-        }
+        client.onInvocation( this );
     }
 }
