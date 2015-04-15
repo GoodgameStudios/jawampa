@@ -18,7 +18,7 @@ package ws.wamp.jawampa.transport;
 
 import java.util.List;
 
-import ws.wamp.jawampa.WampMessages.WampMessage;
+import ws.wamp.jawampa.messages.WampMessage;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

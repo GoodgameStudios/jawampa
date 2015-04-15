@@ -21,9 +21,10 @@ import io.netty.channel.Channel;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import rx.functions.Action0;
-import ws.wamp.jawampa.WampMessages.ErrorMessage;
-import ws.wamp.jawampa.WampMessages.YieldMessage;
 import ws.wamp.jawampa.internal.UriValidator;
+import ws.wamp.jawampa.messages.ErrorMessage;
+import ws.wamp.jawampa.messages.InvocationMessage;
+import ws.wamp.jawampa.messages.YieldMessage;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -111,7 +112,7 @@ public class Request {
         
         UriValidator.validate(errorUri);
         
-        final ErrorMessage msg = new ErrorMessage(WampMessages.InvocationMessage.ID, 
+        final ErrorMessage msg = new ErrorMessage(InvocationMessage.ID, 
                                                   requestId, null, errorUri,
                                                   arguments, keywordArguments);
          

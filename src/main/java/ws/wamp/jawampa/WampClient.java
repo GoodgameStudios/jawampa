@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+
 import rx.Observable;
 import rx.Observable.OnSubscribe;
 import rx.Observer;
@@ -51,28 +52,30 @@ import rx.subjects.AsyncSubject;
 import rx.subjects.BehaviorSubject;
 import rx.subscriptions.CompositeSubscription;
 import rx.subscriptions.Subscriptions;
-import ws.wamp.jawampa.WampMessages.AbortMessage;
-import ws.wamp.jawampa.WampMessages.CallMessage;
-import ws.wamp.jawampa.WampMessages.ErrorMessage;
-import ws.wamp.jawampa.WampMessages.EventMessage;
-import ws.wamp.jawampa.WampMessages.GoodbyeMessage;
-import ws.wamp.jawampa.WampMessages.InvocationMessage;
-import ws.wamp.jawampa.WampMessages.PublishedMessage;
-import ws.wamp.jawampa.WampMessages.RegisterMessage;
-import ws.wamp.jawampa.WampMessages.RegisteredMessage;
-import ws.wamp.jawampa.WampMessages.ResultMessage;
-import ws.wamp.jawampa.WampMessages.SubscribeMessage;
-import ws.wamp.jawampa.WampMessages.SubscribedMessage;
-import ws.wamp.jawampa.WampMessages.UnregisterMessage;
-import ws.wamp.jawampa.WampMessages.UnregisteredMessage;
-import ws.wamp.jawampa.WampMessages.UnsubscribeMessage;
-import ws.wamp.jawampa.WampMessages.UnsubscribedMessage;
-import ws.wamp.jawampa.WampMessages.WampMessage;
-import ws.wamp.jawampa.WampMessages.WelcomeMessage;
 import ws.wamp.jawampa.internal.IdGenerator;
 import ws.wamp.jawampa.internal.IdValidator;
 import ws.wamp.jawampa.internal.Promise;
 import ws.wamp.jawampa.internal.UriValidator;
+import ws.wamp.jawampa.messages.AbortMessage;
+import ws.wamp.jawampa.messages.CallMessage;
+import ws.wamp.jawampa.messages.ErrorMessage;
+import ws.wamp.jawampa.messages.EventMessage;
+import ws.wamp.jawampa.messages.GoodbyeMessage;
+import ws.wamp.jawampa.messages.HelloMessage;
+import ws.wamp.jawampa.messages.InvocationMessage;
+import ws.wamp.jawampa.messages.PublishMessage;
+import ws.wamp.jawampa.messages.PublishedMessage;
+import ws.wamp.jawampa.messages.RegisterMessage;
+import ws.wamp.jawampa.messages.RegisteredMessage;
+import ws.wamp.jawampa.messages.ResultMessage;
+import ws.wamp.jawampa.messages.SubscribeMessage;
+import ws.wamp.jawampa.messages.SubscribedMessage;
+import ws.wamp.jawampa.messages.UnregisterMessage;
+import ws.wamp.jawampa.messages.UnregisteredMessage;
+import ws.wamp.jawampa.messages.UnsubscribeMessage;
+import ws.wamp.jawampa.messages.UnsubscribedMessage;
+import ws.wamp.jawampa.messages.WampMessage;
+import ws.wamp.jawampa.messages.WelcomeMessage;
 import ws.wamp.jawampa.transport.WampChannelEvents;
 import ws.wamp.jawampa.transport.WampClientChannelFactory;
 
@@ -349,7 +352,7 @@ public class WampClient {
                     rolesNode.putObject(role.toString());
                 }
                 
-                ctx.writeAndFlush(new WampMessages.HelloMessage(realm, o));
+                ctx.writeAndFlush(new HelloMessage(realm, o));
             }
         }
 
@@ -571,7 +574,7 @@ public class WampClient {
                 ResultMessage r = (ResultMessage)msg;
                 RequestMapEntry requestInfo = requestMap.get(r.requestId);
                 if (requestInfo == null) return; // Ignore the result
-                if (requestInfo.requestType != WampMessages.CallMessage.ID) {
+                if (requestInfo.requestType != CallMessage.ID) {
                     onProtocolError();
                     return;
                 }
@@ -584,12 +587,12 @@ public class WampClient {
             }
             else if (msg instanceof ErrorMessage) {
                 ErrorMessage r = (ErrorMessage)msg;
-                if (r.requestType == WampMessages.CallMessage.ID
-                 || r.requestType == WampMessages.SubscribeMessage.ID
-                 || r.requestType == WampMessages.UnsubscribeMessage.ID
-                 || r.requestType == WampMessages.PublishMessage.ID
-                 || r.requestType == WampMessages.RegisterMessage.ID
-                 || r.requestType == WampMessages.UnregisterMessage.ID)
+                if (r.requestType == CallMessage.ID
+                 || r.requestType == SubscribeMessage.ID
+                 || r.requestType == UnsubscribeMessage.ID
+                 || r.requestType == PublishMessage.ID
+                 || r.requestType == RegisterMessage.ID
+                 || r.requestType == UnregisterMessage.ID)
                 {
                     RequestMapEntry requestInfo = requestMap.get(r.requestId);
                     if (requestInfo == null) return; // Ignore the error
@@ -608,7 +611,7 @@ public class WampClient {
                 SubscribedMessage m = (SubscribedMessage)msg;
                 RequestMapEntry requestInfo = requestMap.get(m.requestId);
                 if (requestInfo == null) return; // Ignore the result
-                if (requestInfo.requestType != WampMessages.SubscribeMessage.ID) {
+                if (requestInfo.requestType != SubscribeMessage.ID) {
                     onProtocolError();
                     return;
                 }
@@ -622,7 +625,7 @@ public class WampClient {
             	UnsubscribedMessage m = (UnsubscribedMessage)msg;
                 RequestMapEntry requestInfo = requestMap.get(m.requestId);
                 if (requestInfo == null) return; // Ignore the result
-                if (requestInfo.requestType != WampMessages.UnsubscribeMessage.ID) {
+                if (requestInfo.requestType != UnsubscribeMessage.ID) {
                     onProtocolError();
                     return;
                 }
@@ -646,7 +649,7 @@ public class WampClient {
                 PublishedMessage m = (PublishedMessage)msg;
                 RequestMapEntry requestInfo = requestMap.get(m.requestId);
                 if (requestInfo == null) return; // Ignore the result
-                if (requestInfo.requestType != WampMessages.PublishMessage.ID) {
+                if (requestInfo.requestType != PublishMessage.ID) {
                     onProtocolError();
                     return;
                 }
@@ -660,7 +663,7 @@ public class WampClient {
                 RegisteredMessage m = (RegisteredMessage)msg;
                 RequestMapEntry requestInfo = requestMap.get(m.requestId);
                 if (requestInfo == null) return; // Ignore the result
-                if (requestInfo.requestType != WampMessages.RegisterMessage.ID) {
+                if (requestInfo.requestType != RegisterMessage.ID) {
                     onProtocolError();
                     return;
                 }
@@ -674,7 +677,7 @@ public class WampClient {
                 UnregisteredMessage m = (UnregisteredMessage)msg;
                 RequestMapEntry requestInfo = requestMap.get(m.requestId);
                 if (requestInfo == null) return; // Ignore the result
-                if (requestInfo.requestType != WampMessages.UnregisterMessage.ID) {
+                if (requestInfo.requestType != UnregisterMessage.ID) {
                     onProtocolError();
                     return;
                 }
@@ -815,10 +818,10 @@ public class WampClient {
                 
                 final long requestId = IdGenerator.newLinearId(lastRequestId, requestMap);
                 lastRequestId = requestId;
-                final WampMessages.PublishMessage msg =
-                    new WampMessages.PublishMessage(requestId, null, topic, arguments, argumentsKw);
+                final PublishMessage msg =
+                    new PublishMessage(requestId, null, topic, arguments, argumentsKw);
                 
-                requestMap.put(requestId, new RequestMapEntry(WampMessages.PublishMessage.ID, resultSubject));
+                requestMap.put(requestId, new RequestMapEntry(PublishMessage.ID, resultSubject));
                 channel.writeAndFlush(msg);
             }
         });
