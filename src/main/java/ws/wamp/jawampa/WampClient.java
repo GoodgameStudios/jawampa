@@ -28,11 +28,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -56,26 +53,15 @@ import ws.wamp.jawampa.internal.IdGenerator;
 import ws.wamp.jawampa.internal.IdValidator;
 import ws.wamp.jawampa.internal.Promise;
 import ws.wamp.jawampa.internal.UriValidator;
-import ws.wamp.jawampa.messages.AbortMessage;
 import ws.wamp.jawampa.messages.CallMessage;
-import ws.wamp.jawampa.messages.ErrorMessage;
-import ws.wamp.jawampa.messages.EventMessage;
 import ws.wamp.jawampa.messages.GoodbyeMessage;
 import ws.wamp.jawampa.messages.HelloMessage;
-import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.PublishMessage;
-import ws.wamp.jawampa.messages.PublishedMessage;
 import ws.wamp.jawampa.messages.RegisterMessage;
-import ws.wamp.jawampa.messages.RegisteredMessage;
-import ws.wamp.jawampa.messages.ResultMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
-import ws.wamp.jawampa.messages.SubscribedMessage;
 import ws.wamp.jawampa.messages.UnregisterMessage;
-import ws.wamp.jawampa.messages.UnregisteredMessage;
 import ws.wamp.jawampa.messages.UnsubscribeMessage;
-import ws.wamp.jawampa.messages.UnsubscribedMessage;
 import ws.wamp.jawampa.messages.WampMessage;
-import ws.wamp.jawampa.messages.WelcomeMessage;
 import ws.wamp.jawampa.transport.WampChannelEvents;
 import ws.wamp.jawampa.transport.WampClientChannelFactory;
 
@@ -106,8 +92,8 @@ public class WampClient {
     }
 
     /** The current status */
-    Status status = Status.Disconnected;
-    BehaviorSubject<Status> statusObservable = BehaviorSubject.create(Status.Disconnected);
+    public Status status = Status.Disconnected;
+    public BehaviorSubject<Status> statusObservable = BehaviorSubject.create(Status.Disconnected);
     
     final EventLoopGroup eventLoop;
     final Scheduler scheduler;
@@ -132,37 +118,37 @@ public class WampClient {
 
     /** The factory which is used to create new transports to the remote peer */
     final WampClientChannelFactory channelFactory;
-    Channel channel;
+    public Channel channel;
     ChannelFuture connectFuture;
     SessionHandler handler;
     
     long lastRequestId = IdValidator.MIN_VALID_ID;
     
-    final int totalNrReconnects;
-    final int reconnectInterval;
-    int remainingNrReconnects = 0;
+    public final int totalNrReconnects;
+    public final int reconnectInterval;
+    public int remainingNrReconnects = 0;
     Subscription reconnectSubscription;
     
-    long sessionId;
-    ObjectNode welcomeDetails = null;
+    public long sessionId;
+    public ObjectNode welcomeDetails = null;
     final WampRoles[] clientRoles;
-    WampRoles[] routerRoles;
+    public WampRoles[] routerRoles;
     
-    enum PubSubState {
+    public enum PubSubState {
         Subscribing,
         Subscribed,
         Unsubscribing,
         Unsubscribed
     }
     
-    enum RegistrationState {
+    public enum RegistrationState {
         Registering,
         Registered,
         Unregistering,
         Unregistered
     }
     
-    static class RequestMapEntry {
+    public static class RequestMapEntry {
         public final int requestType;
         public final AsyncSubject<?> resultSubject;
         
@@ -172,7 +158,7 @@ public class WampClient {
         }
     }
     
-    static class SubscriptionMapEntry {
+    public static class SubscriptionMapEntry {
         public PubSubState state;
         public long subscriptionId = 0;
         
@@ -184,7 +170,7 @@ public class WampClient {
         }
     }
     
-    static class RegisteredProceduresMapEntry {
+    public static class RegisteredProceduresMapEntry {
         public RegistrationState state;
         public long registrationId = 0;
         public final Subscriber<? super Request> subscriber;
@@ -195,17 +181,17 @@ public class WampClient {
         }
     }
     
-    HashMap<Long, RequestMapEntry> requestMap = 
+    public HashMap<Long, RequestMapEntry> requestMap = 
         new HashMap<Long, WampClient.RequestMapEntry>();
     
-    HashMap<String, SubscriptionMapEntry> subscriptionsByUri =
+    public HashMap<String, SubscriptionMapEntry> subscriptionsByUri =
         new HashMap<String, SubscriptionMapEntry>();
-    HashMap<Long, SubscriptionMapEntry> subscriptionsBySubscriptionId =
+    public HashMap<Long, SubscriptionMapEntry> subscriptionsBySubscriptionId =
         new HashMap<Long, SubscriptionMapEntry>();
     
-    HashMap<String, RegisteredProceduresMapEntry> registeredProceduresByUri = 
+    public HashMap<String, RegisteredProceduresMapEntry> registeredProceduresByUri = 
             new HashMap<String, RegisteredProceduresMapEntry>();
-    HashMap<Long, RegisteredProceduresMapEntry> registeredProceduresById = 
+    public HashMap<Long, RegisteredProceduresMapEntry> registeredProceduresById = 
             new HashMap<Long, RegisteredProceduresMapEntry>();
     
     
@@ -495,11 +481,11 @@ public class WampClient {
         return statusObservable;
     }
     
-    private void onProtocolError() {
+    public void onProtocolError() {
         onSessionError(new ApplicationError(ApplicationError.PROTCOL_ERROR));
     }
     
-    private void onSessionError(ApplicationError error) {
+    public void onSessionError(ApplicationError error) {
         // We move from connected to disconnected
         closeCurrentTransport();
         statusObservable.onNext(status);
@@ -519,191 +505,10 @@ public class WampClient {
     private void onMessageReceived(WampMessage msg) {
         if (welcomeDetails == null) {
             // We were not yet welcomed
-            if (msg instanceof WelcomeMessage) {
-                // Receive a welcome. Now the session is established!
-                welcomeDetails = ((WelcomeMessage) msg).details;
-                sessionId = ((WelcomeMessage) msg).sessionId;
-                
-                // Extract the roles of the remote side
-                JsonNode roleNode = welcomeDetails.get("roles");
-                if (roleNode == null || !roleNode.isObject()) {
-                    onProtocolError();
-                    return;
-                }
-                
-                routerRoles = null;
-                Set<WampRoles> rroles = new HashSet<WampRoles>();
-                Iterator<String> roleKeys = roleNode.fieldNames();
-                while (roleKeys.hasNext()) {
-                    WampRoles role = WampRoles.fromString(roleKeys.next());
-                    if (role != null) rroles.add(role);
-                }
-                routerRoles = new WampRoles[rroles.size()];
-                int i = 0;
-                for (WampRoles r : rroles) {
-                    routerRoles[i] = r; 
-                    i++;
-                }
-                
-                remainingNrReconnects = totalNrReconnects;
-                status = Status.Connected;
-                statusObservable.onNext(status);
-            }
-            else if (msg instanceof AbortMessage) {
-                // The remote doesn't want us to connect :(
-                AbortMessage abort = (AbortMessage) msg;
-                onSessionError(new ApplicationError(abort.reason));
-            }
-        }
-        else {
+            msg.onMessageBeforeWelcome( this );
+        } else {
             // We were already welcomed
-            if (msg instanceof WelcomeMessage) {
-                onProtocolError();
-            }
-            else if (msg instanceof AbortMessage) {
-                onProtocolError();
-            }
-            else if (msg instanceof GoodbyeMessage) {
-                // Reply the goodbye
-                channel.writeAndFlush(new GoodbyeMessage(null, ApplicationError.GOODBYE_AND_OUT));
-                // We could also use the reason from the msg, but this would be harder
-                // to determinate from a "real" error
-                onSessionError(new ApplicationError(ApplicationError.GOODBYE_AND_OUT));
-            }
-            else if (msg instanceof ResultMessage) {
-                ResultMessage r = (ResultMessage)msg;
-                RequestMapEntry requestInfo = requestMap.get(r.requestId);
-                if (requestInfo == null) return; // Ignore the result
-                if (requestInfo.requestType != CallMessage.ID) {
-                    onProtocolError();
-                    return;
-                }
-                requestMap.remove(r.requestId);
-                Reply reply = new Reply(r.arguments, r.argumentsKw);
-                @SuppressWarnings("unchecked")
-                AsyncSubject<Reply> subject = (AsyncSubject<Reply>)requestInfo.resultSubject;
-                subject.onNext(reply);
-                subject.onCompleted();
-            }
-            else if (msg instanceof ErrorMessage) {
-                ErrorMessage r = (ErrorMessage)msg;
-                if (r.requestType == CallMessage.ID
-                 || r.requestType == SubscribeMessage.ID
-                 || r.requestType == UnsubscribeMessage.ID
-                 || r.requestType == PublishMessage.ID
-                 || r.requestType == RegisterMessage.ID
-                 || r.requestType == UnregisterMessage.ID)
-                {
-                    RequestMapEntry requestInfo = requestMap.get(r.requestId);
-                    if (requestInfo == null) return; // Ignore the error
-                    // Check whether the request type we sent equals the
-                    // request type for the error we receive
-                    if (requestInfo.requestType != r.requestType) {
-                        onProtocolError();
-                        return;
-                    }
-                    requestMap.remove(r.requestId);
-                    ApplicationError err = new ApplicationError(r.error, r.arguments, r.argumentsKw);
-                    requestInfo.resultSubject.onError(err);
-                }
-            }
-            else if (msg instanceof SubscribedMessage) {
-                SubscribedMessage m = (SubscribedMessage)msg;
-                RequestMapEntry requestInfo = requestMap.get(m.requestId);
-                if (requestInfo == null) return; // Ignore the result
-                if (requestInfo.requestType != SubscribeMessage.ID) {
-                    onProtocolError();
-                    return;
-                }
-                requestMap.remove(m.requestId);
-                @SuppressWarnings("unchecked")
-                AsyncSubject<Long> subject = (AsyncSubject<Long>)requestInfo.resultSubject;
-                subject.onNext(m.subscriptionId);
-                subject.onCompleted();
-            }
-            else if (msg instanceof UnsubscribedMessage) {
-            	UnsubscribedMessage m = (UnsubscribedMessage)msg;
-                RequestMapEntry requestInfo = requestMap.get(m.requestId);
-                if (requestInfo == null) return; // Ignore the result
-                if (requestInfo.requestType != UnsubscribeMessage.ID) {
-                    onProtocolError();
-                    return;
-                }
-                requestMap.remove(m.requestId);
-                @SuppressWarnings("unchecked")
-                AsyncSubject<Void> subject = (AsyncSubject<Void>)requestInfo.resultSubject;
-                subject.onNext(null);
-                subject.onCompleted();
-            }
-            else if (msg instanceof EventMessage) {
-                EventMessage ev = (EventMessage)msg;
-                SubscriptionMapEntry entry = subscriptionsBySubscriptionId.get(ev.subscriptionId);
-                if (entry == null || entry.state != PubSubState.Subscribed) return; // Ignore the result
-                PubSubData evResult = new PubSubData(ev.arguments, ev.argumentsKw);
-                // publish the event
-                for (Subscriber<? super PubSubData> s : entry.subscribers) {
-                    s.onNext(evResult);
-                }
-            }
-            else if (msg instanceof PublishedMessage) {
-                PublishedMessage m = (PublishedMessage)msg;
-                RequestMapEntry requestInfo = requestMap.get(m.requestId);
-                if (requestInfo == null) return; // Ignore the result
-                if (requestInfo.requestType != PublishMessage.ID) {
-                    onProtocolError();
-                    return;
-                }
-                requestMap.remove(m.requestId);
-                @SuppressWarnings("unchecked")
-                AsyncSubject<Long> subject = (AsyncSubject<Long>)requestInfo.resultSubject;
-                subject.onNext(m.publicationId);
-                subject.onCompleted();
-            }
-            else if (msg instanceof RegisteredMessage) {
-                RegisteredMessage m = (RegisteredMessage)msg;
-                RequestMapEntry requestInfo = requestMap.get(m.requestId);
-                if (requestInfo == null) return; // Ignore the result
-                if (requestInfo.requestType != RegisterMessage.ID) {
-                    onProtocolError();
-                    return;
-                }
-                requestMap.remove(m.requestId);
-                @SuppressWarnings("unchecked")
-                AsyncSubject<Long> subject = (AsyncSubject<Long>)requestInfo.resultSubject;
-                subject.onNext(m.registrationId);
-                subject.onCompleted();
-            }
-            else if (msg instanceof UnregisteredMessage) {
-                UnregisteredMessage m = (UnregisteredMessage)msg;
-                RequestMapEntry requestInfo = requestMap.get(m.requestId);
-                if (requestInfo == null) return; // Ignore the result
-                if (requestInfo.requestType != UnregisterMessage.ID) {
-                    onProtocolError();
-                    return;
-                }
-                requestMap.remove(m.requestId);
-                @SuppressWarnings("unchecked")
-                AsyncSubject<Void> subject = (AsyncSubject<Void>)requestInfo.resultSubject;
-                subject.onNext(null);
-                subject.onCompleted();
-            }
-            else if (msg instanceof InvocationMessage) {
-                InvocationMessage m = (InvocationMessage)msg;
-                RegisteredProceduresMapEntry entry = registeredProceduresById.get(m.registrationId);
-                if (entry == null || entry.state != RegistrationState.Registered) {
-                    // Send an error that we are no longer registered
-                    channel.writeAndFlush(new ErrorMessage(InvocationMessage.ID, m.requestId, null,
-                                          ApplicationError.NO_SUCH_PROCEDURE, null, null));
-                }
-                else {
-                    // Send the request to the subscriber, which can then send responses
-                    Request request = new Request(this, channel, m.requestId, m.arguments, m.argumentsKw);
-                    entry.subscriber.onNext(request);
-                }
-            }
-            else {
-                // Unknown message
-            }
+            msg.onMessage( this );
         }
     }
     

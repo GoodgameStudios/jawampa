@@ -1,7 +1,10 @@
 package ws.wamp.jawampa.messages;
 
+import rx.subjects.AsyncSubject;
 import ws.wamp.jawampa.ApplicationError;
+import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.WampClient.RequestMapEntry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,5 +40,20 @@ public class UnsubscribedMessage extends WampMessage {
 
             return new UnsubscribedMessage(requestId);
         }
+    }
+
+    @Override
+    public void onMessage( WampClient client ) {
+        RequestMapEntry requestInfo = client.requestMap.get(requestId);
+        if (requestInfo == null) return; // Ignore the result
+        if (requestInfo.requestType != UnsubscribeMessage.ID) {
+            client.onProtocolError();
+            return;
+        }
+        client.requestMap.remove(requestId);
+        @SuppressWarnings("unchecked")
+        AsyncSubject<Void> subject = (AsyncSubject<Void>)requestInfo.resultSubject;
+        subject.onNext(null);
+        subject.onCompleted();
     }
 }

@@ -1,6 +1,7 @@
 package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
+import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -45,5 +46,14 @@ public class GoodbyeMessage extends WampMessage {
             String reason = messageNode.get(2).asText();
             return new GoodbyeMessage(details, reason);
         }
+    }
+
+    @Override
+    public void onMessage( WampClient client ) {
+        // Reply the goodbye
+        client.channel.writeAndFlush(new GoodbyeMessage(null, ApplicationError.GOODBYE_AND_OUT));
+        // We could also use the reason from the msg, but this would be harder
+        // to determinate from a "real" error
+        client.onSessionError(new ApplicationError(ApplicationError.GOODBYE_AND_OUT));
     }
 }

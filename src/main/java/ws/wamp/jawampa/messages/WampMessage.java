@@ -1,10 +1,14 @@
 package ws.wamp.jawampa.messages;
 
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import ws.wamp.jawampa.ApplicationError;
+import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,6 +19,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
  * Base class for all messages
  */
 public abstract class WampMessage {
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(WampMessage.class);
 
     public abstract JsonNode toObjectArray(ObjectMapper mapper)
             throws WampError;
@@ -31,6 +36,16 @@ public abstract class WampMessage {
             return null; // We can't find the message type, so we skip it
 
         return factory.fromObjectArray(messageNode);
+    }
+
+    public void onMessageBeforeWelcome( WampClient client ) {
+        logger.warn( "Received unexpected message before welcome message" + this );
+        client.onProtocolError();
+    }
+
+    public void onMessage( WampClient client ) {
+        logger.warn( "Received unknown message" + this );
+        client.onProtocolError();
     }
 
     // Register all possible message types

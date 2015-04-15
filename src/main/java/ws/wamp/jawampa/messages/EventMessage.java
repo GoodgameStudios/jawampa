@@ -1,6 +1,10 @@
 package ws.wamp.jawampa.messages;
 
+import rx.Subscriber;
 import ws.wamp.jawampa.ApplicationError;
+import ws.wamp.jawampa.PubSubData;
+import ws.wamp.jawampa.WampClient;
+import ws.wamp.jawampa.WampClient.PubSubState;
 import ws.wamp.jawampa.WampError;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -79,6 +83,17 @@ public class EventMessage extends WampMessage {
 
             return new EventMessage(subscriptionId, publicationId, details,
                     arguments, argumentsKw);
+        }
+    }
+
+    @Override
+    public void onMessage( WampClient client ) {
+        WampClient.SubscriptionMapEntry entry = client.subscriptionsBySubscriptionId.get(subscriptionId);
+        if (entry == null || entry.state != PubSubState.Subscribed) return; // Ignore the result
+        PubSubData evResult = new PubSubData(arguments, argumentsKw);
+        // publish the event
+        for (Subscriber<? super PubSubData> s : entry.subscribers) {
+            s.onNext(evResult);
         }
     }
 }

@@ -1,7 +1,10 @@
 package ws.wamp.jawampa.messages;
 
+import rx.subjects.AsyncSubject;
 import ws.wamp.jawampa.ApplicationError;
+import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.WampClient.RequestMapEntry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,5 +45,20 @@ public class PublishedMessage extends WampMessage {
 
             return new PublishedMessage(requestId, publicationId);
         }
+    }
+
+    @Override
+    public void onMessage( WampClient client ) {
+        RequestMapEntry requestInfo = client.requestMap.get(requestId);
+        if (requestInfo == null) return; // Ignore the result
+        if (requestInfo.requestType != PublishMessage.ID) {
+            client.onProtocolError();
+            return;
+        }
+        client.requestMap.remove(requestId);
+        @SuppressWarnings("unchecked")
+        AsyncSubject<Long> subject = (AsyncSubject<Long>)requestInfo.resultSubject;
+        subject.onNext(publicationId);
+        subject.onCompleted();
     }
 }

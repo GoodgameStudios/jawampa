@@ -1,7 +1,14 @@
 package ws.wamp.jawampa.messages;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
 import ws.wamp.jawampa.ApplicationError;
+import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.WampRoles;
+import ws.wamp.jawampa.WampClient.Status;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,5 +52,42 @@ public class WelcomeMessage extends WampMessage {
             ObjectNode details = (ObjectNode) messageNode.get(2);
             return new WelcomeMessage(sessionId, details);
         }
+    }
+
+    @Override
+    public void onMessageBeforeWelcome( WampClient client ) {
+        // Receive a welcome. Now the session is established!
+        client.welcomeDetails = details;
+        client.sessionId = sessionId;
+
+        // Extract the roles of the remote side
+        JsonNode roleNode = details.get("roles");
+        if (roleNode == null || !roleNode.isObject()) {
+            client.onProtocolError();
+            return;
+        }
+
+        client.routerRoles = null;
+        Set<WampRoles> rroles = new HashSet<WampRoles>();
+        Iterator<String> roleKeys = roleNode.fieldNames();
+        while (roleKeys.hasNext()) {
+            WampRoles role = WampRoles.fromString(roleKeys.next());
+            if (role != null) rroles.add(role);
+        }
+        client.routerRoles = new WampRoles[rroles.size()];
+        int i = 0;
+        for (WampRoles r : rroles) {
+            client.routerRoles[i] = r; 
+            i++;
+        }
+
+        client.remainingNrReconnects = client.totalNrReconnects;
+        client.status = Status.Connected;
+        client.statusObservable.onNext(client.status);
+    }
+
+    @Override
+    public void onMessage( WampClient client ) {
+        client.onProtocolError();
     }
 }

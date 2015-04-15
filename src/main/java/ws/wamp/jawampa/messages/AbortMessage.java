@@ -1,6 +1,7 @@
 package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
+import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -44,5 +45,16 @@ public class AbortMessage extends WampMessage {
             String reason = messageNode.get(2).asText();
             return new AbortMessage(details, reason);
         }
+    }
+
+    @Override
+    public void onMessageBeforeWelcome( WampClient client ) {
+        // The remote doesn't want us to connect :(
+        client.onSessionError(new ApplicationError(reason));
+    }
+
+    @Override
+    public void onMessage( WampClient client ) {
+        client.onProtocolError();
     }
 }
