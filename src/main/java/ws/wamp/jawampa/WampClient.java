@@ -181,7 +181,7 @@ public class WampClient {
         }
     }
     
-    public HashMap<Long, RequestMapEntry> requestMap = 
+    private HashMap<Long, RequestMapEntry> requestMap = 
         new HashMap<Long, WampClient.RequestMapEntry>();
     
     public HashMap<String, SubscriptionMapEntry> subscriptionsByUri =
@@ -488,6 +488,31 @@ public class WampClient {
         remainingNrReconnects = totalNrReconnects;
         status = Status.Connected;
         statusObservable.onNext(status);
+    }
+
+    public <ReplyT> void onSuccessfulReply(long requestId, long expectedId, ReplyT reply) {
+        RequestMapEntry requestInfo = requestMap.get(requestId);
+        if (requestInfo == null) return; // Ignore the result
+        if (requestInfo.requestType != expectedId) {
+            onProtocolError();
+            return;
+        }
+        requestMap.remove(requestId);
+        @SuppressWarnings("unchecked")
+        AsyncSubject<ReplyT> subject = (AsyncSubject<ReplyT>)requestInfo.resultSubject;
+        subject.onNext(reply);
+        subject.onCompleted();
+    }
+
+    public void onErrorReply(long requestId, long expectedId, ApplicationError err) {
+        RequestMapEntry requestInfo = requestMap.get(requestId);
+        if (requestInfo == null) return; // Ignore the result
+        if (requestInfo.requestType != expectedId) {
+            onProtocolError();
+            return;
+        }
+        requestMap.remove(requestId);
+        requestInfo.resultSubject.onError(err);
     }
 
     public void onProtocolError() {

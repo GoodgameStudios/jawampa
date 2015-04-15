@@ -3,7 +3,6 @@ package ws.wamp.jawampa.messages;
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
-import ws.wamp.jawampa.WampClient.RequestMapEntry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -98,17 +97,7 @@ public class ErrorMessage extends WampMessage {
                 || requestType == PublishMessage.ID
                 || requestType == RegisterMessage.ID
                 || requestType == UnregisterMessage.ID) {
-            RequestMapEntry requestInfo = client.requestMap.get(requestId);
-            if (requestInfo == null) return; // Ignore the error
-            // Check whether the request type we sent equals the
-            // request type for the error we receive
-            if (requestInfo.requestType != requestType) {
-                client.onProtocolError();
-                return;
-            }
-            client.requestMap.remove(requestId);
-            ApplicationError err = new ApplicationError(error, arguments, argumentsKw);
-            requestInfo.resultSubject.onError(err);
+            client.onErrorReply( requestId, requestType, new ApplicationError(error, arguments, argumentsKw) );
         }
     }
 }

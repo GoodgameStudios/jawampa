@@ -1,6 +1,5 @@
 package ws.wamp.jawampa.messages;
 
-import rx.subjects.AsyncSubject;
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.Reply;
 import ws.wamp.jawampa.WampClient;
@@ -80,17 +79,6 @@ public class ResultMessage extends WampMessage {
 
     @Override
     public void onMessage( WampClient client ) {
-        WampClient.RequestMapEntry requestInfo = client.requestMap.get(requestId);
-        if (requestInfo == null) return; // Ignore the result
-        if (requestInfo.requestType != CallMessage.ID) {
-            client.onProtocolError();
-            return;
-        }
-        client.requestMap.remove(requestId);
-        Reply reply = new Reply(arguments, argumentsKw);
-        @SuppressWarnings("unchecked")
-        AsyncSubject<Reply> subject = (AsyncSubject<Reply>)requestInfo.resultSubject;
-        subject.onNext(reply);
-        subject.onCompleted();
+        client.onSuccessfulReply( requestId, CallMessage.ID, new Reply(arguments, argumentsKw) );
     }
 }

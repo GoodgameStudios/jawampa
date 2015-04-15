@@ -1,9 +1,7 @@
 package ws.wamp.jawampa.messages;
 
-import rx.subjects.AsyncSubject;
 import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
-import ws.wamp.jawampa.WampClient.RequestMapEntry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,23 +28,10 @@ public abstract class RequestedMessage extends WampMessage {
 
     @Override
     public void onMessage( WampClient client ) {
-        RequestMapEntry requestInfo = client.requestMap.get(requestId);
-        if (requestInfo == null) return; // Ignore the result
-        if (requestInfo.requestType != ID) {
-            client.onProtocolError();
-            return;
-        }
-        client.requestMap.remove(requestId);
         if (newResourceId == -1) {
-            @SuppressWarnings("unchecked")
-            AsyncSubject<Long> subject = (AsyncSubject<Long>)requestInfo.resultSubject;
-            subject.onNext(newResourceId);
-            subject.onCompleted();
+            client.onSuccessfulReply( requestId, ID, null );
         } else {
-            @SuppressWarnings("unchecked")
-            AsyncSubject<Void> subject = (AsyncSubject<Void>)requestInfo.resultSubject;
-            subject.onNext(null);
-            subject.onCompleted();
+            client.onSuccessfulReply( requestId, ID, newResourceId );
         }
     }
 }
