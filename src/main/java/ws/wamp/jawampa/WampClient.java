@@ -122,36 +122,36 @@ public class WampClient {
     /** The factory which is used to create new transports to the remote peer */
     private final WampClientChannelFactory channelFactory;
     private Channel channel;
-    ChannelFuture connectFuture;
-    SessionHandler handler;
+    private ChannelFuture connectFuture;
+    private SessionHandler handler;
     
-    long lastRequestId = IdValidator.MIN_VALID_ID;
+    private long lastRequestId = IdValidator.MIN_VALID_ID;
     
     private final int totalNrReconnects;
     private final int reconnectInterval;
     private int remainingNrReconnects = 0;
-    Subscription reconnectSubscription;
+    private Subscription reconnectSubscription;
     
     private long sessionId;
     private ObjectNode welcomeDetails = null;
     private final WampRoles[] clientRoles;
     private WampRoles[] routerRoles;
     
-    public enum PubSubState {
+    private enum PubSubState {
         Subscribing,
         Subscribed,
         Unsubscribing,
         Unsubscribed
     }
     
-    public enum RegistrationState {
+    private enum RegistrationState {
         Registering,
         Registered,
         Unregistering,
         Unregistered
     }
     
-    public static class RequestMapEntry {
+    private static class RequestMapEntry {
         public final int requestType;
         public final AsyncSubject<?> resultSubject;
         
@@ -161,7 +161,7 @@ public class WampClient {
         }
     }
     
-    public static class SubscriptionMapEntry {
+    private static class SubscriptionMapEntry {
         public PubSubState state;
         public long subscriptionId = 0;
         
@@ -173,7 +173,7 @@ public class WampClient {
         }
     }
     
-    public static class RegisteredProceduresMapEntry {
+    private static class RegisteredProceduresMapEntry {
         public RegistrationState state;
         public long registrationId = 0;
         public final Subscriber<? super Request> subscriber;
