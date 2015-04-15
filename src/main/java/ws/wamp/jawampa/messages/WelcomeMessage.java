@@ -8,7 +8,6 @@ import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.WampRoles;
-import ws.wamp.jawampa.WampClient.Status;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -81,9 +80,7 @@ public class WelcomeMessage extends WampMessage {
             i++;
         }
 
-        client.remainingNrReconnects = client.totalNrReconnects;
-        client.status = Status.Connected;
-        client.statusObservable.onNext(client.status);
+        client.onConnectionEstablished();
     }
 
     @Override

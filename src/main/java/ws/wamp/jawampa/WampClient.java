@@ -82,7 +82,7 @@ public class WampClient {
     /**
      * Possible states for a WAMP session between client and router
      */
-    public static enum Status {
+    private static enum Status {
         /** The session is not connected */
         Disconnected,
         /** The session is trying to connect to the router */
@@ -92,8 +92,8 @@ public class WampClient {
     }
 
     /** The current status */
-    public Status status = Status.Disconnected;
-    public BehaviorSubject<Status> statusObservable = BehaviorSubject.create(Status.Disconnected);
+    private Status status = Status.Disconnected;
+    private BehaviorSubject<Status> statusObservable = BehaviorSubject.create(Status.Disconnected);
     
     final EventLoopGroup eventLoop;
     final Scheduler scheduler;
@@ -124,9 +124,9 @@ public class WampClient {
     
     long lastRequestId = IdValidator.MIN_VALID_ID;
     
-    public final int totalNrReconnects;
-    public final int reconnectInterval;
-    public int remainingNrReconnects = 0;
+    private final int totalNrReconnects;
+    private final int reconnectInterval;
+    private int remainingNrReconnects = 0;
     Subscription reconnectSubscription;
     
     public long sessionId;
@@ -481,6 +481,12 @@ public class WampClient {
         return statusObservable;
     }
     
+    public void onConnectionEstablished() {
+        remainingNrReconnects = totalNrReconnects;
+        status = Status.Connected;
+        statusObservable.onNext(status);
+    }
+
     public void onProtocolError() {
         onSessionError(new ApplicationError(ApplicationError.PROTCOL_ERROR));
     }
