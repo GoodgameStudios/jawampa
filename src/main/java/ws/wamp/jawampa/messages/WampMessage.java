@@ -60,8 +60,8 @@ public abstract class WampMessage {
         map.put(HelloMessage.ID, new HelloMessage.Factory());
         map.put(WelcomeMessage.ID, new WelcomeMessage.Factory());
         map.put(AbortMessage.ID, new AbortMessage.Factory());
-        // .put(MessageType.ID, new ChallengeMessage.Factory());
-        // map.put(MessageType.ID, new AuthenticateMessage.Factory());
+        map.put(ChallengeMessage.ID, new ChallengeMessage.Factory());
+        map.put(AuthenticateMessage.ID, new AuthenticateMessage.Factory());
         map.put(GoodbyeMessage.ID, new GoodbyeMessage.Factory());
         // map.put(MessageType.ID, new HeartbeatMessage.Factory());
         map.put(ErrorMessage.ID, new ErrorMessage.Factory());

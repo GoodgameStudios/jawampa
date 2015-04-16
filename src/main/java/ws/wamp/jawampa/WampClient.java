@@ -24,9 +24,12 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -49,11 +52,14 @@ import rx.subjects.AsyncSubject;
 import rx.subjects.BehaviorSubject;
 import rx.subscriptions.CompositeSubscription;
 import rx.subscriptions.Subscriptions;
+import ws.wamp.jawampa.auth.client.ClientSideAuthentication;
 import ws.wamp.jawampa.internal.IdGenerator;
 import ws.wamp.jawampa.internal.IdValidator;
 import ws.wamp.jawampa.internal.Promise;
 import ws.wamp.jawampa.internal.UriValidator;
+import ws.wamp.jawampa.messages.AuthenticateMessage;
 import ws.wamp.jawampa.messages.CallMessage;
+import ws.wamp.jawampa.messages.ChallengeMessage;
 import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.EventMessage;
 import ws.wamp.jawampa.messages.GoodbyeMessage;
@@ -81,7 +87,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * directly be instantiated.
  */
 public class WampClient {
-    
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(WampMessage.class);
+
     /**
      * Possible states for a WAMP session between client and router
      */
@@ -137,6 +144,9 @@ public class WampClient {
     private final WampRoles[] clientRoles;
     private WampRoles[] routerRoles;
     
+    private String authId;
+    private final List<ClientSideAuthentication> authMethods;
+
     public enum PubSubState {
         Subscribing,
         Subscribed,
@@ -201,7 +211,8 @@ public class WampClient {
     WampClient(URI routerUri, String realm, WampRoles[] roles,
                boolean closeClientOnErrors,
                WampClientChannelFactory channelFactory,
-               int nrReconnects, int reconnectInterval)
+               int nrReconnects, int reconnectInterval,
+               String authId, List<ClientSideAuthentication> authMethods)
     {
         // Create an eventloop and the RX scheduler on top of it
         this.eventLoop = new NioEventLoopGroup(1, new ThreadFactory() {
@@ -221,6 +232,8 @@ public class WampClient {
         this.channelFactory = channelFactory;
         this.totalNrReconnects = nrReconnects;
         this.reconnectInterval = reconnectInterval;
+        this.authId = authId;
+        this.authMethods = Collections.unmodifiableList( authMethods );
     }
 
     private void completeStatus(Exception e) {
@@ -340,7 +353,15 @@ public class WampClient {
                 for (WampRoles role : clientRoles) {
                     rolesNode.putObject(role.toString());
                 }
-                
+                if (authId != null) {
+                    o.put( "authid", authId );
+                }
+                ArrayNode authMethodsNode = objectMapper.createArrayNode();
+                for( ClientSideAuthentication authMethod : authMethods ) {
+                    authMethodsNode.add( authMethod.authMethod() );
+                }
+                o.set( "authmethods", authMethodsNode );
+
                 ctx.writeAndFlush(new HelloMessage(realm, o));
             }
         }
@@ -564,6 +585,7 @@ public class WampClient {
     }
 
     private void onMessageReceived(WampMessage msg) {
+        logger.debug( msg.toString() );
         if (welcomeDetails == null) {
             // We were not yet welcomed
             msg.onMessageBeforeWelcome( this );
@@ -572,7 +594,22 @@ public class WampClient {
             msg.onMessage( this );
         }
     }
-    
+
+    public void onChallengeReceived(ChallengeMessage challenge) {
+        for (ClientSideAuthentication authMethod : authMethods) {
+            if (authMethod.authMethod().equals( challenge.authMethod )) {
+                AuthenticateMessage reply = authMethod.handleChallenge( challenge, objectMapper );
+                if ( reply == null ) {
+                    onProtocolError();
+                } else {
+                    scheduleMessage( reply );
+                }
+                return;
+            }
+        }
+        onProtocolError();
+    }
+
     /**
      * Builds an ArrayNode from all positional arguments in a WAMP message.<br>
      * If there are no positional arguments then null will be returned, as
