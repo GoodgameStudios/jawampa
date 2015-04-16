@@ -85,7 +85,7 @@ public class WampClient {
     /**
      * Possible states for a WAMP session between client and router
      */
-    private static enum Status {
+    public static enum Status {
         /** The session is not connected */
         Disconnected,
         /** The session is trying to connect to the router */
@@ -137,14 +137,14 @@ public class WampClient {
     private final WampRoles[] clientRoles;
     private WampRoles[] routerRoles;
     
-    private enum PubSubState {
+    public enum PubSubState {
         Subscribing,
         Subscribed,
         Unsubscribing,
         Unsubscribed
     }
     
-    private enum RegistrationState {
+    public enum RegistrationState {
         Registering,
         Registered,
         Unregistering,
