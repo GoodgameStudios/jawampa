@@ -78,6 +78,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import ws.wamp.jawampa.messages.PublishedMessage;
+import ws.wamp.jawampa.messages.RegisteredMessage;
+import ws.wamp.jawampa.messages.ResultMessage;
+import ws.wamp.jawampa.messages.SubscribedMessage;
+import ws.wamp.jawampa.messages.UnregisteredMessage;
+import ws.wamp.jawampa.messages.UnsubscribedMessage;
 
 /**
  * Provides the client-side functionality for WAMP.<br>
@@ -162,11 +168,11 @@ public class WampClient {
     }
     
     private static class RequestMapEntry {
-        public final int requestType;
+        public final int expectedResponseType;
         public final AsyncSubject<?> resultSubject;
         
-        public RequestMapEntry(int requestType, AsyncSubject<?> resultSubject) {
-            this.requestType = requestType;
+        public RequestMapEntry(int expectedResponseType, AsyncSubject<?> resultSubject) {
+            this.expectedResponseType = expectedResponseType;
             this.resultSubject = resultSubject;
         }
     }
@@ -541,7 +547,7 @@ public class WampClient {
     public <ReplyT> void onSuccessfulReply(long requestId, long expectedId, ReplyT reply) {
         RequestMapEntry requestInfo = requestMap.get(requestId);
         if (requestInfo == null) return; // Ignore the result
-        if (requestInfo.requestType != expectedId) {
+        if (requestInfo.expectedResponseType != expectedId) {
             onProtocolError();
             return;
         }
@@ -555,7 +561,7 @@ public class WampClient {
     public void onErrorReply(long requestId, long expectedId, ApplicationError err) {
         RequestMapEntry requestInfo = requestMap.get(requestId);
         if (requestInfo == null) return; // Ignore the result
-        if (requestInfo.requestType != expectedId) {
+        if (requestInfo.expectedResponseType != expectedId) {
             onProtocolError();
             return;
         }
@@ -724,7 +730,7 @@ public class WampClient {
                 final PublishMessage msg =
                     new PublishMessage(requestId, null, topic, arguments, argumentsKw);
                 
-                requestMap.put(requestId, new RequestMapEntry(PublishMessage.ID, resultSubject));
+                requestMap.put(requestId, new RequestMapEntry(PublishedMessage.ID, resultSubject));
                 channel.writeAndFlush(msg);
             }
         });
@@ -827,7 +833,7 @@ public class WampClient {
                         });
 
                         requestMap.put(requestId, 
-                            new RequestMapEntry(RegisterMessage.ID, registerFuture));
+                            new RequestMapEntry(RegisteredMessage.ID, registerFuture));
                         channel.writeAndFlush(msg);
                     }
                 });
@@ -878,7 +884,7 @@ public class WampClient {
                         });
                         
                         requestMap.put(requestId, new RequestMapEntry(
-                            UnregisterMessage.ID, unregisterFuture));
+                            UnregisteredMessage.ID, unregisterFuture));
                         channel.writeAndFlush(msg);
                     }
                 });
@@ -1040,7 +1046,7 @@ public class WampClient {
                             });
 
                             requestMap.put(requestId, 
-                                    new RequestMapEntry(SubscribeMessage.ID, 
+                                    new RequestMapEntry(SubscribedMessage.ID, 
                                             subscribeFuture));
                             channel.writeAndFlush(msg);
                         }
@@ -1097,7 +1103,7 @@ public class WampClient {
                             });
                             
                             requestMap.put(requestId, new RequestMapEntry(
-                                UnsubscribeMessage.ID, unsubscribeFuture));
+                                UnsubscribedMessage.ID, unsubscribeFuture));
                             channel.writeAndFlush(msg);
                         }
                     }
@@ -1147,7 +1153,7 @@ public class WampClient {
                 final CallMessage callMsg = new CallMessage(requestId, null, procedure, 
                                                             arguments, argumentsKw);
                 
-                requestMap.put(requestId, new RequestMapEntry(CallMessage.ID, resultSubject));
+                requestMap.put(requestId, new RequestMapEntry(ResultMessage.ID, resultSubject));
                 channel.writeAndFlush(callMsg);
             }
         });
