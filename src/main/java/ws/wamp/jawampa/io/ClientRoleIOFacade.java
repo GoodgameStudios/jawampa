@@ -6,5 +6,5 @@ import ws.wamp.jawampa.messages.WampMessage;
  * @author hkraemer@ggs-hh.net
  */
 public interface ClientRoleIOFacade {
-    public void scheduleMessageToRouter( WampMessage message );
+    void scheduleMessageToRouter( WampMessage message );
 }
