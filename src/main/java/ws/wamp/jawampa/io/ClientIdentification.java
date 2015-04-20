@@ -32,7 +32,7 @@ public class ClientIdentification {
             return false;
         }
         final ClientIdentification other = (ClientIdentification) obj;
-        if ( this.client != client ) return false; // deliberate ==
+        if ( this.client != other.client ) return false; // deliberate ==
         return true;
     }
 }
