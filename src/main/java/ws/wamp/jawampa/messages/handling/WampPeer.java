@@ -122,7 +122,7 @@ public class WampPeer implements MessageHandler {
 
     @Override
     public void onUnsubscribeError(ErrorMessage msg) {
-        nonNull( subscriber ).onUnsubscribed( msg );
+        nonNull( subscriber ).onUnsubscribeError( msg );
     }
 
     @Override
