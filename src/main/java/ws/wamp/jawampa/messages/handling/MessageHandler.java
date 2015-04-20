@@ -18,7 +18,6 @@ import ws.wamp.jawampa.messages.PublishMessage;
 import ws.wamp.jawampa.messages.PublishedMessage;
 import ws.wamp.jawampa.messages.RegisterMessage;
 import ws.wamp.jawampa.messages.RegisteredMessage;
-import ws.wamp.jawampa.messages.RequestedMessage;
 import ws.wamp.jawampa.messages.ResultMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
 import ws.wamp.jawampa.messages.SubscribedMessage;
@@ -26,7 +25,6 @@ import ws.wamp.jawampa.messages.UnregisterMessage;
 import ws.wamp.jawampa.messages.UnregisteredMessage;
 import ws.wamp.jawampa.messages.UnsubscribeMessage;
 import ws.wamp.jawampa.messages.UnsubscribedMessage;
-import ws.wamp.jawampa.messages.WampMessage;
 import ws.wamp.jawampa.messages.WelcomeMessage;
 import ws.wamp.jawampa.messages.YieldMessage;
 

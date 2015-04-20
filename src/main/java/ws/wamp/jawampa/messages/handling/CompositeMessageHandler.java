@@ -38,7 +38,7 @@ public class CompositeMessageHandler implements MessageHandler {
     }
     
     public static CompositeMessageHandler withSubHandlers( List<MessageHandler> subHandlers ) {
-        return new CompositeMessageHandler( new ArrayList( subHandlers ) );
+        return new CompositeMessageHandler( new ArrayList<MessageHandler>( subHandlers ) );
     }
     
     public static CompositeMessageHandler withSubHandlers( MessageHandler... subHandlers ) {
