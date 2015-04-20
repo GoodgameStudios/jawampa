@@ -539,8 +539,8 @@ public class WampClient {
         }
         else {
             // Send the request to the subscriber, which can then send responses
-            Request request = new Request(this, channel, iv.requestId, iv.arguments, iv.argumentsKw);
-            entry.subscriber.onNext(request);
+//            Request request = new Request(this, channel, iv.requestId, iv.arguments, iv.argumentsKw);
+//            entry.subscriber.onNext(request);
         }
     }
 

@@ -21,6 +21,7 @@ import io.netty.channel.Channel;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import ws.wamp.jawampa.internal.UriValidator;
+import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.YieldMessage;
@@ -37,8 +38,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public class Request {
     
-    final WampClient client;
-    final Channel channel;
+    final BaseClient baseClient;
     final long requestId;
     final ArrayNode arguments;
     final ObjectNode keywordArguments;
@@ -58,11 +58,10 @@ public class Request {
         return keywordArguments;
     }
 
-    public Request(WampClient client, Channel channel, 
+    public Request(BaseClient baseClient, 
                    long requestId, ArrayNode arguments, ObjectNode keywordArguments)
     {
-        this.client = client;
-        this.channel = channel;
+        this.baseClient = baseClient;
         this.requestId = requestId;
         this.arguments = arguments;
         this.keywordArguments = keywordArguments;
@@ -93,7 +92,7 @@ public class Request {
      * @param args The positional arguments to sent in the response
      */
     public void replyError(String errorUri, Object... args) throws ApplicationError{
-        replyError(errorUri, client.buildArgumentsArray(args), null);
+        replyError(errorUri, baseClient.buildArgumentsArray(args), null);
     }
     
     /**
@@ -115,7 +114,7 @@ public class Request {
                                                   requestId, null, errorUri,
                                                   arguments, keywordArguments);
 
-        client.scheduleMessage( msg );
+        baseClient.scheduleMessageToRouter( msg );
     }
     
     /**
@@ -132,7 +131,7 @@ public class Request {
         final YieldMessage msg = new YieldMessage(requestId, null,
                                                   arguments, keywordArguments);
 
-        client.scheduleMessage( msg );
+        baseClient.scheduleMessageToRouter( msg );
     }
     
     /**
@@ -147,7 +146,7 @@ public class Request {
      * @param keywordArguments The keyword arguments to sent in the response
      */
     public void reply(Object... args) {
-        reply(client.buildArgumentsArray(args), null);
+        reply(baseClient.buildArgumentsArray(args), null);
     }
 
 }

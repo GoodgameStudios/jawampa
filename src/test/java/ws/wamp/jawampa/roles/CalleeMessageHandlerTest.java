@@ -5,32 +5,44 @@
  */
 package ws.wamp.jawampa.roles;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import ws.wamp.jawampa.io.BaseClient;
+import ws.wamp.jawampa.messages.InvocationMessage;
+import ws.wamp.jawampa.messages.YieldMessage;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.Before;
-import org.junit.Test;
-import ws.wamp.jawampa.io.ValidatingBucketRouter;
-import ws.wamp.jawampa.messages.InvocationMessage;
-import ws.wamp.jawampa.messages.WampMessage;
-import ws.wamp.jawampa.messages.YieldMessage;
+
 
 /**
  *
  * @author hkraemer@ggs-hh.net
  */
 public class CalleeMessageHandlerTest {
-    private ValidatingBucketRouter router;
     private ObjectMapper mapper;
+
+    @Mock
+    private BaseClient baseClient;
     
     @Before
     public void setUp() {
-        router = new ValidatingBucketRouter();
         mapper = new ObjectMapper();
+        MockitoAnnotations.initMocks( this );
     }
     
     @Test
     public void testInvocation() {
+        CalleeMessageHandler subject = new CalleeMessageHandler( baseClient );
+        subject.registerProcedure( "foo" );
+        
         long requestId = 1234567890L;
         
         long registrationId = 9876543210L;
@@ -39,14 +51,12 @@ public class CalleeMessageHandlerTest {
         ObjectNode callKwArgs = mapper.createObjectNode();
         ObjectNode hopefullyIgnoredDetails = mapper.createObjectNode();
         
-        ObjectNode optionsJustPassedThrough = mapper.createObjectNode();
-        ArrayNode resultsButCalledArguments = mapper.createArrayNode();
-        ObjectNode resultsKwButCalledArgumentsKw = mapper.createObjectNode();
+//        ObjectNode optionsJustPassedThrough = mapper.createObjectNode();
+//        ArrayNode resultsButCalledArguments = mapper.createArrayNode();
+//        ObjectNode resultsKwButCalledArgumentsKw = mapper.createObjectNode();
         
-        router.expect( new YieldMessage( requestId, optionsJustPassedThrough, resultsButCalledArguments, resultsKwButCalledArgumentsKw));
+//        router.expect( new YieldMessage( requestId, optionsJustPassedThrough, resultsButCalledArguments, resultsKwButCalledArgumentsKw));
         
-        CalleeMessageHandler subject = new CalleeMessageHandler();
-        subject.addMethod( "todo" );
         
         InvocationMessage invocation = new InvocationMessage( requestId,
                                                               registrationId,
@@ -56,6 +66,8 @@ public class CalleeMessageHandlerTest {
         
         subject.onInvocation( invocation );
         
-        router.checkExpectations();
+        verify( baseClient ).scheduleMessageToRouter( any( YieldMessage.class ) ); // FIXME: Make this more specific
+        
+//        router.checkExpectations();
     }
 }
