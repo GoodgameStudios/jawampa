@@ -8,6 +8,9 @@ package ws.wamp.jawampa.roles;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -40,7 +43,8 @@ public class CalleeMessageHandlerTest {
     
     @Test
     public void testInvocation() {
-        CalleeMessageHandler subject = new CalleeMessageHandler( baseClient );
+        Executor executor = Executors.newFixedThreadPool( 1 );
+        CalleeMessageHandler subject = new CalleeMessageHandler( baseClient, executor );
         subject.registerProcedure( "foo" );
         
         long requestId = 1234567890L;

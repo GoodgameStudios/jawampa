@@ -7,12 +7,15 @@ package ws.wamp.jawampa.roles;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 import rx.Observable;
 import rx.Observable.OnSubscribe;
+import rx.Scheduler;
 import rx.Subscriber;
 import rx.functions.Action0;
 import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 import rx.subjects.AsyncSubject;
 import rx.subscriptions.Subscriptions;
 import ws.wamp.jawampa.ApplicationError;
@@ -61,9 +64,13 @@ public class CalleeMessageHandler extends BaseMessageHandler {
             new HashMap<Long, RegisteredProceduresMapEntry>();
 
     private final BaseClient baseClient;
+    private final Executor executor;
+    private final Scheduler scheduler;
 
-    public CalleeMessageHandler( BaseClient baseClient ) {
+    public CalleeMessageHandler( BaseClient baseClient, Executor executor ) {
         this.baseClient = baseClient;
+        this.executor = executor;
+        this.scheduler = Schedulers.from(executor);
     }
 
     private void attachCancelRegistrationAction(final Subscriber<? super Request> subscriber,
@@ -73,7 +80,7 @@ public class CalleeMessageHandler extends BaseMessageHandler {
         subscriber.add(Subscriptions.create(new Action0() {
             @Override
             public void call() {
-                baseClient.scheduleAsync(new Runnable() {
+                executor.execute(new Runnable() {
                     @Override
                     public void run() {
                         if (mapEntry.state != RegistrationState.Registered) return;
@@ -87,9 +94,8 @@ public class CalleeMessageHandler extends BaseMessageHandler {
                         final UnregisterMessage msg = new UnregisterMessage(requestId, mapEntry.registrationId);
 
                         final AsyncSubject<Void> unregisterFuture = AsyncSubject.create();
-                        baseClient.observeOnScheduler( unregisterFuture )
-                                  .subscribe(new Action1<Void>()
-                        {
+                        unregisterFuture.observeOn(scheduler)
+                                        .subscribe(new Action1<Void>() {
                             @Override
                             public void call(Void t1) {
                                 // Unregistration at the broker was successful
@@ -122,7 +128,7 @@ public class CalleeMessageHandler extends BaseMessageHandler {
                     return;
                 }
 
-                baseClient.scheduleAsync(new Runnable() {
+                executor.execute(new Runnable() {
                     @Override
                     public void run() {
                         // If the Subscriber unsubscribed in the meantime we return early
@@ -151,9 +157,8 @@ public class CalleeMessageHandler extends BaseMessageHandler {
                         final RegisterMessage msg = new RegisterMessage(requestId, null, topic);
 
                         final AsyncSubject<Long> registerFuture = AsyncSubject.create();
-                        baseClient.observeOnScheduler( registerFuture )
-                                  .subscribe(new Action1<Long>()
-                        {
+                        registerFuture.observeOn(scheduler)
+                                      .subscribe(new Action1<Long>() {
                             @Override
                             public void call(Long t1) {
                                 // Check if we were unsubscribed (through transport close)
