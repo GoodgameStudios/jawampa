@@ -16,8 +16,6 @@
 
 package ws.wamp.jawampa;
 
-import io.netty.channel.Channel;
-
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import ws.wamp.jawampa.internal.UriValidator;
@@ -81,22 +79,6 @@ public class Request {
     
     /**
      * Send an error message in response to the request.<br>
-     * This version of the function will use Jacksons object mapping
-     * capabilities to transform the argument objects in a JSON argument
-     * array which will be sent as the positional arguments of the call.
-     * If keyword arguments are needed then this function can not be used.<br>
-     * If this is called more than once then the following invocations will
-     * have no effect. Respones will be only sent once.
-     * @param errorUri The error message that should be sent. This must be a
-     * valid WAMP Uri.
-     * @param args The positional arguments to sent in the response
-     */
-    public void replyError(String errorUri, Object... args) throws ApplicationError{
-        replyError(errorUri, baseClient.buildArgumentsArray(args), null);
-    }
-    
-    /**
-     * Send an error message in response to the request.<br>
      * If this is called more than once then the following invocations will
      * have no effect. Respones will be only sent once.
      * @param errorUri The error message that should be sent. This must be a
@@ -133,20 +115,4 @@ public class Request {
 
         baseClient.scheduleMessageToRouter( msg );
     }
-    
-    /**
-     * Send a normal response to the request.<br>
-     * This version of the function will use Jacksons object mapping
-     * capabilities to transform the argument objects in a JSON argument
-     * array which will be sent as the positional arguments of the call.
-     * If keyword arguments are needed then this function can not be used.<br>
-     * If this is called more than once then the following invocations will
-     * have no effect. Respones will be only sent once.
-     * @param arguments The positional arguments to sent in the response
-     * @param keywordArguments The keyword arguments to sent in the response
-     */
-    public void reply(Object... args) {
-        reply(baseClient.buildArgumentsArray(args), null);
-    }
-
 }

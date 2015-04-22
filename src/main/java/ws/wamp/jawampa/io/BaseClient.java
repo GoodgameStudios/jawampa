@@ -13,5 +13,4 @@ public interface BaseClient {
     long getNewRequestId();
     WampClient.Status connectionState();
     void setConnectionState( WampClient.Status status );
-    ArrayNode buildArgumentsArray(Object... args);
 }
