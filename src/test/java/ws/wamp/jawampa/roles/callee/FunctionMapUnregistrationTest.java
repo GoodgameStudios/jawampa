@@ -64,7 +64,7 @@ public class FunctionMapUnregistrationTest {
     @Test(expected=IllegalStateException.class)
     public void testFunctionUnavailableAfterUnregistrationComplete() {
         subject.unregister( TEST_URI );
-        subject.unregistrationComplete( SOME_REGISTRATION_ID, TEST_URI );
+        subject.unregistrationComplete( SOME_REGISTRATION_ID );
 
         ArrayNode pos = mapper.createArrayNode();
         ObjectNode kw = mapper.createObjectNode();

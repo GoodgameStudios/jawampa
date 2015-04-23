@@ -45,12 +45,12 @@ public class RegistrationMessageHandlerTest {
         }
 
         @Override
-        public void unregistrationComplete( RegistrationId requestId, String uri ) {
+        public void unregistrationComplete( RegistrationId registrationId ) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public void unregistrationFailed( String uri, String reason ) {
+        public void unregistrationFailed( RegistrationId registrationId, String reason ) {
             throw new UnsupportedOperationException();
         }
     }

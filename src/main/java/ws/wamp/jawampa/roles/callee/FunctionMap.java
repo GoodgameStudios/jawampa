@@ -98,14 +98,16 @@ public class FunctionMap implements RegistrationStateWatcher {
     }
 
     @Override
-    public void unregistrationComplete( RegistrationId registrationId, String uri ) {
+    public void unregistrationComplete( RegistrationId registrationId ) {
+        String uri = id2uri.get( registrationId );
         uri2implementation.remove( uri );
         id2uri.remove( registrationId );
         uri2unregistrationFailureCallback.remove( uri );
     }
 
     @Override
-    public void unregistrationFailed( String uri, String reason ) {
+    public void unregistrationFailed( RegistrationId registrationId, String reason ) {
+        String uri = id2uri.get( registrationId );
         uri2unregistrationFailureCallback.get( uri ).unregistrationFailed( uri, reason );
         uri2unregistrationFailureCallback.remove( uri );
     }
