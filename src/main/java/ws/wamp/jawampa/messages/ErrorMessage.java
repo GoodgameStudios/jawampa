@@ -3,6 +3,7 @@ package ws.wamp.jawampa.messages;
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.io.RequestId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,13 +21,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class ErrorMessage extends WampMessage {
     public final static int ID = 8;
     public final int requestType;
-    public final long requestId;
+    public final RequestId requestId;
     public final ObjectNode details;
     public final String error;
     public final ArrayNode arguments;
     public final ObjectNode argumentsKw;
 
-    public ErrorMessage(int requestType, long requestId,
+    public ErrorMessage(int requestType, RequestId requestId,
             ObjectNode details, String error, ArrayNode arguments,
             ObjectNode argumentsKw) {
         this.requestType = requestType;
@@ -41,7 +42,7 @@ public class ErrorMessage extends WampMessage {
         ArrayNode messageNode = mapper.createArrayNode();
         messageNode.add(ID);
         messageNode.add(requestType);
-        messageNode.add(requestId);
+        messageNode.add(requestId.getValue());
         if (details != null)
             messageNode.add(details);
         else
@@ -84,7 +85,7 @@ public class ErrorMessage extends WampMessage {
                 }
             }
 
-            return new ErrorMessage(requestType, requestId, details, error,
+            return new ErrorMessage(requestType, RequestId.of( requestId ), details, error,
                     arguments, argumentsKw);
         }
     }
@@ -97,7 +98,7 @@ public class ErrorMessage extends WampMessage {
                 || requestType == PublishMessage.ID
                 || requestType == RegisterMessage.ID
                 || requestType == UnregisterMessage.ID) {
-            client.onErrorReply( requestId, requestType, new ApplicationError(error, arguments, argumentsKw) );
+            client.onErrorReply( requestId.getValue(), requestType, new ApplicationError(error, arguments, argumentsKw) );
         }
     }
 }

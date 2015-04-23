@@ -3,6 +3,8 @@ package ws.wamp.jawampa.messages;
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.io.RequestId;
+import ws.wamp.jawampa.roles.callee.RegistrationId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,13 +20,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public class InvocationMessage extends WampMessage {
     public final static int ID = 68;
-    public final long requestId;
-    public final long registrationId;
+    public final RequestId requestId;
+    public final RegistrationId registrationId;
     public final ObjectNode details;
     public final ArrayNode arguments;
     public final ObjectNode argumentsKw;
 
-    public InvocationMessage(long requestId, long registrationId,
+    public InvocationMessage(RequestId requestId, RegistrationId registrationId,
             ObjectNode details, ArrayNode arguments, ObjectNode argumentsKw) {
         this.requestId = requestId;
         this.registrationId = registrationId;
@@ -36,8 +38,8 @@ public class InvocationMessage extends WampMessage {
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
         messageNode.add(ID);
-        messageNode.add(requestId);
-        messageNode.add(registrationId);
+        messageNode.add(requestId.getValue());
+        messageNode.add(registrationId.getValue());
         if (details != null)
             messageNode.add(details);
         else
@@ -77,7 +79,7 @@ public class InvocationMessage extends WampMessage {
                 }
             }
 
-            return new InvocationMessage(requestId, registrationId,
+            return new InvocationMessage(RequestId.of( requestId ), RegistrationId.of( registrationId ),
                     details, arguments, argumentsKw);
         }
     }

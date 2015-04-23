@@ -15,15 +15,15 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * 
  * @author sglimm@goodgamestudios.com
  */
-public class FunctionMap implements RegistrationCallback {
+public class FunctionMap implements RegistrationStateWatcher {
     private final PublishSubject<PendingRegistration> registrationsSubject;
     private final Map<String, RPCImplementation> uri2implementation;
-    private final Map<Long, String> id2uri;
+    private final Map<RegistrationId, String> id2uri;
 
     public FunctionMap( ) {
         this.registrationsSubject = PublishSubject.create();
         uri2implementation = new HashMap<String, RPCImplementation>();
-        id2uri = new HashMap<Long, String>();
+        id2uri = new HashMap<RegistrationId, String>();
     }
 
     public PublishSubject<PendingRegistration> getRegistrationsSubject() {
@@ -39,12 +39,21 @@ public class FunctionMap implements RegistrationCallback {
         registrationsSubject.onNext( new PendingRegistration( uri, this ) );
     }
 
-    @Override
-    public void registrationComplete( long id, String uri ) {
-        id2uri.put( id, uri );
+    public void register( String uri, RPCImplementation implementation, RegistrationFailedCallback failed ) {
+        
     }
 
-    public void call( long id, Response request, ArrayNode pos, ObjectNode kw ) {
+    @Override
+    public void registrationComplete( RegistrationId registrationId, String uri ) {
+        id2uri.put( registrationId, uri );
+    }
+
+    @Override
+    public void registrationFailed( RegistrationId registrationId, String uri ) {
+        
+    }
+
+    public void call( RegistrationId id, Response request, ArrayNode pos, ObjectNode kw ) {
         uri2implementation.get( id2uri.get( id ) ).call( request, pos, kw );
     }
 }

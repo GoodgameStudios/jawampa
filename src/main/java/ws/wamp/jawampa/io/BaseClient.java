@@ -8,7 +8,7 @@ import ws.wamp.jawampa.messages.WampMessage;
  */
 public interface BaseClient {
     void scheduleMessageToRouter( WampMessage message );
-    long getNewRequestId();
+    RequestId getNewRequestId();
     WampClient.Status connectionState();
     void setConnectionState( WampClient.Status status );
 }

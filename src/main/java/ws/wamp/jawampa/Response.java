@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import ws.wamp.jawampa.internal.UriValidator;
 import ws.wamp.jawampa.io.BaseClient;
+import ws.wamp.jawampa.io.RequestId;
 import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.YieldMessage;
@@ -37,7 +38,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class Response {
     
     final BaseClient baseClient;
-    final long requestId;
+    final RequestId requestId;
     final ArrayNode arguments;
     final ObjectNode keywordArguments;
     
@@ -57,7 +58,7 @@ public class Response {
     }
 
     public Response(BaseClient baseClient, 
-                   long requestId, ArrayNode arguments, ObjectNode keywordArguments)
+            RequestId requestId, ArrayNode arguments, ObjectNode keywordArguments)
     {
         this.baseClient = baseClient;
         this.requestId = requestId;

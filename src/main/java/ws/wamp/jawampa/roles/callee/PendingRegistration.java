@@ -2,9 +2,9 @@ package ws.wamp.jawampa.roles.callee;
 
 public class PendingRegistration {
     private final String uri;
-    private final RegistrationCallback handleRegistrationIdCallback;
+    private final RegistrationStateWatcher handleRegistrationIdCallback;
 
-    public PendingRegistration( String uri, RegistrationCallback handleRegistrationIdCallback ) {
+    public PendingRegistration( String uri, RegistrationStateWatcher handleRegistrationIdCallback ) {
         this.uri = uri;
         this.handleRegistrationIdCallback = handleRegistrationIdCallback;
     }
@@ -13,7 +13,7 @@ public class PendingRegistration {
         return uri;
     }
 
-    public RegistrationCallback getHandleRegistrationIdCallback() {
+    public RegistrationStateWatcher getHandleRegistrationIdCallback() {
         return handleRegistrationIdCallback;
     }
 }

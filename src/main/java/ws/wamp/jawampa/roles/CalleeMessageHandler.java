@@ -24,11 +24,13 @@ import ws.wamp.jawampa.WampClient.Status;
 import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.internal.UriValidator;
 import ws.wamp.jawampa.io.BaseClient;
+import ws.wamp.jawampa.io.RequestId;
 import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.RegisterMessage;
 import ws.wamp.jawampa.messages.UnregisterMessage;
 import ws.wamp.jawampa.messages.handling.BaseMessageHandler;
+import ws.wamp.jawampa.roles.callee.RegistrationId;
 
 /**
  *
@@ -90,8 +92,8 @@ public class CalleeMessageHandler extends BaseMessageHandler {
                         registeredProceduresById.remove(mapEntry.registrationId);
 
                         // Make the unregister call
-                        final long requestId = baseClient.getNewRequestId();
-                        final UnregisterMessage msg = new UnregisterMessage(requestId, mapEntry.registrationId);
+                        final RequestId requestId = baseClient.getNewRequestId();
+                        final UnregisterMessage msg = new UnregisterMessage(requestId, RegistrationId.of( mapEntry.registrationId ));
 
                         final AsyncSubject<Void> unregisterFuture = AsyncSubject.create();
                         unregisterFuture.observeOn(scheduler)
@@ -108,7 +110,7 @@ public class CalleeMessageHandler extends BaseMessageHandler {
                             }
                         });
 
-                        requestIdToPendingUnRegistration.put(requestId,  unregisterFuture);
+                        requestIdToPendingUnRegistration.put(requestId.getValue(),  unregisterFuture);
                         baseClient.scheduleMessageToRouter( msg );
                     }
                 });
@@ -153,7 +155,7 @@ public class CalleeMessageHandler extends BaseMessageHandler {
                         registeredProceduresByUri.put(topic, newEntry);
 
                         // Make the subscribe call
-                        final long requestId = baseClient.getNewRequestId();
+                        final RequestId requestId = baseClient.getNewRequestId();
                         final RegisterMessage msg = new RegisterMessage(requestId, null, topic);
 
                         final AsyncSubject<Long> registerFuture = AsyncSubject.create();
@@ -192,7 +194,7 @@ public class CalleeMessageHandler extends BaseMessageHandler {
                             }
                         });
 
-                        requestIdToPendingRegistration.put(requestId, registerFuture);
+                        requestIdToPendingRegistration.put(requestId.getValue(), registerFuture);
                         baseClient.scheduleMessageToRouter(msg);
                     }
                 });

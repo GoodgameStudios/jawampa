@@ -2,6 +2,8 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.io.RequestId;
+import ws.wamp.jawampa.roles.callee.RegistrationId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,10 +16,10 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
  */
 public class UnregisterMessage extends WampMessage {
     public final static int ID = 66;
-    public final long requestId;
-    public final long registrationId;
+    public final RequestId requestId;
+    public final RegistrationId registrationId;
 
-    public UnregisterMessage(long requestId, long registrationId) {
+    public UnregisterMessage(RequestId requestId, RegistrationId registrationId) {
         this.requestId = requestId;
         this.registrationId = registrationId;
     }
@@ -25,8 +27,8 @@ public class UnregisterMessage extends WampMessage {
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
         messageNode.add(ID);
-        messageNode.add(requestId);
-        messageNode.add(registrationId);
+        messageNode.add(requestId.getValue());
+        messageNode.add(registrationId.getValue());
         return messageNode;
     }
 
@@ -42,7 +44,7 @@ public class UnregisterMessage extends WampMessage {
             long requestId = messageNode.get(1).asLong();
             long registrationId = messageNode.get(2).asLong();
 
-            return new UnregisterMessage(requestId, registrationId);
+            return new UnregisterMessage(RequestId.of( requestId ), RegistrationId.of( registrationId ) );
         }
     }
 }

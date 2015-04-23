@@ -57,6 +57,7 @@ import ws.wamp.jawampa.internal.IdGenerator;
 import ws.wamp.jawampa.internal.IdValidator;
 import ws.wamp.jawampa.internal.Promise;
 import ws.wamp.jawampa.internal.UriValidator;
+import ws.wamp.jawampa.io.RequestId;
 import ws.wamp.jawampa.messages.AuthenticateMessage;
 import ws.wamp.jawampa.messages.CallMessage;
 import ws.wamp.jawampa.messages.ChallengeMessage;
@@ -66,11 +67,18 @@ import ws.wamp.jawampa.messages.GoodbyeMessage;
 import ws.wamp.jawampa.messages.HelloMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.PublishMessage;
+import ws.wamp.jawampa.messages.PublishedMessage;
 import ws.wamp.jawampa.messages.RegisterMessage;
+import ws.wamp.jawampa.messages.RegisteredMessage;
+import ws.wamp.jawampa.messages.ResultMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
+import ws.wamp.jawampa.messages.SubscribedMessage;
 import ws.wamp.jawampa.messages.UnregisterMessage;
+import ws.wamp.jawampa.messages.UnregisteredMessage;
 import ws.wamp.jawampa.messages.UnsubscribeMessage;
+import ws.wamp.jawampa.messages.UnsubscribedMessage;
 import ws.wamp.jawampa.messages.WampMessage;
+import ws.wamp.jawampa.roles.callee.RegistrationId;
 import ws.wamp.jawampa.transport.WampChannelEvents;
 import ws.wamp.jawampa.transport.WampClientChannelFactory;
 
@@ -78,12 +86,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import ws.wamp.jawampa.messages.PublishedMessage;
-import ws.wamp.jawampa.messages.RegisteredMessage;
-import ws.wamp.jawampa.messages.ResultMessage;
-import ws.wamp.jawampa.messages.SubscribedMessage;
-import ws.wamp.jawampa.messages.UnregisteredMessage;
-import ws.wamp.jawampa.messages.UnsubscribedMessage;
 
 /**
  * Provides the client-side functionality for WAMP.<br>
@@ -793,7 +795,7 @@ public class WampClient {
                         // Make the subscribe call
                         final long requestId = IdGenerator.newLinearId(lastRequestId, requestMap);
                         lastRequestId = requestId;
-                        final RegisterMessage msg = new RegisterMessage(requestId, null, topic);
+                        final RegisterMessage msg = new RegisterMessage(RequestId.of( requestId ), null, topic);
 
                         final AsyncSubject<Long> registerFuture = AsyncSubject.create();
                         registerFuture
@@ -865,7 +867,7 @@ public class WampClient {
                         // Make the unregister call
                         final long requestId = IdGenerator.newLinearId(lastRequestId, requestMap);
                         lastRequestId = requestId;
-                        final UnregisterMessage msg = new UnregisterMessage(requestId, mapEntry.registrationId);
+                        final UnregisterMessage msg = new UnregisterMessage(RequestId.of( requestId ), RegistrationId.of (mapEntry.registrationId));
                         
                         final AsyncSubject<Void> unregisterFuture = AsyncSubject.create();
                         unregisterFuture
@@ -1150,7 +1152,7 @@ public class WampClient {
                 
                 final long requestId = IdGenerator.newLinearId(lastRequestId, requestMap);
                 lastRequestId = requestId;
-                final CallMessage callMsg = new CallMessage(requestId, null, procedure, 
+                final CallMessage callMsg = new CallMessage(RequestId.of( requestId ), null, procedure, 
                                                             arguments, argumentsKw);
                 
                 requestMap.put(requestId, new RequestMapEntry(ResultMessage.ID, resultSubject));

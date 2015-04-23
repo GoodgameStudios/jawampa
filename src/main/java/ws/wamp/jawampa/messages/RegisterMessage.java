@@ -2,6 +2,7 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.io.RequestId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,11 +15,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public class RegisterMessage extends WampMessage {
     public final static int ID = 64;
-    public final long requestId;
+    public final RequestId requestId;
     public final ObjectNode options;
     public final String procedure;
 
-    public RegisterMessage(long requestId, ObjectNode options, String procedure) {
+    public RegisterMessage(RequestId requestId, ObjectNode options, String procedure) {
         this.requestId = requestId;
         this.options = options;
         this.procedure = procedure;
@@ -27,7 +28,7 @@ public class RegisterMessage extends WampMessage {
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
         messageNode.add(ID);
-        messageNode.add(requestId);
+        messageNode.add(requestId.getValue());
         if (options != null)
             messageNode.add(options);
         else
@@ -49,7 +50,7 @@ public class RegisterMessage extends WampMessage {
             ObjectNode options = (ObjectNode) messageNode.get(2);
             String procedure = messageNode.get(3).asText();
 
-            return new RegisterMessage(requestId, options, procedure);
+            return new RegisterMessage(RequestId.of(requestId), options, procedure);
         }
     }
 }

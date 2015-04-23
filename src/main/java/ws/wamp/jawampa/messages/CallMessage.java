@@ -2,6 +2,7 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.io.RequestId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,13 +17,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public class CallMessage extends WampMessage {
     public final static int ID = 48;
-    public final long requestId;
+    public final RequestId requestId;
     public final ObjectNode options;
     public final String procedure;
     public final ArrayNode arguments;
     public final ObjectNode argumentsKw;
 
-    public CallMessage(long requestId, ObjectNode options, String procedure,
+    public CallMessage(RequestId requestId, ObjectNode options, String procedure,
             ArrayNode arguments, ObjectNode argumentsKw) {
         this.requestId = requestId;
         this.options = options;
@@ -34,7 +35,7 @@ public class CallMessage extends WampMessage {
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
         messageNode.add(ID);
-        messageNode.add(requestId);
+        messageNode.add(requestId.getValue());
         if (options != null)
             messageNode.add(options);
         else
@@ -75,7 +76,7 @@ public class CallMessage extends WampMessage {
                 }
             }
 
-            return new CallMessage(requestId, options, procedure,
+            return new CallMessage(RequestId.of( requestId ), options, procedure,
                     arguments, argumentsKw);
         }
     }

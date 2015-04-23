@@ -13,6 +13,7 @@ import org.mockito.ArgumentMatcher;
 
 import rx.subjects.PublishSubject;
 import ws.wamp.jawampa.io.BaseClient;
+import ws.wamp.jawampa.io.RequestId;
 import ws.wamp.jawampa.messages.RegisterMessage;
 import ws.wamp.jawampa.messages.RegisteredMessage;
 import ws.wamp.jawampa.messages.WampMessage;
@@ -22,20 +23,25 @@ public class RegistrationMessageHandlerTest {
 
     @Test
     public void testOnJavaFunctionRegistration() {
-        class MockRegistrationCallback implements RegistrationCallback {
-            public long registrationId;
+        class MockRegistrationCallback implements RegistrationStateWatcher {
+            public RegistrationId registrationId;
             public String uri;
             @Override
-            public void registrationComplete( long registrationId, String uri ) {
+            public void registrationComplete( RegistrationId registrationId, String uri ) {
                 if ( this.uri != null ) throw new IllegalStateException( "registrationComplete was called twice!" );
                 this.registrationId = registrationId;
                 this.uri = Objects.requireNonNull( uri );
+            }
+
+            @Override
+            public void registrationFailed( RegistrationId id, String uri ) {
+                throw new UnsupportedOperationException();
             }
         }
 
         PublishSubject<PendingRegistration> magicAsyncQueue = PublishSubject.create();
         BaseClient baseClient = mock(BaseClient.class);
-        when( baseClient.getNewRequestId() ).thenReturn( 42L );
+        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
 
         RegistrationMessageHandler subject = new RegistrationMessageHandler( baseClient, magicAsyncQueue );
 
@@ -46,17 +52,17 @@ public class RegistrationMessageHandlerTest {
             @Override
             public boolean matches( Object argument ) {
                 RegisterMessage message = (RegisterMessage)argument;
-                if ( message.requestId != 42 ) return false;
+                if ( !message.requestId.equals( RequestId.of( 42L ) ) ) return false;
                 if ( !message.procedure.equals( TEST_URI ) ) return false;
                 return true;
             }
         };
         verify( baseClient ).scheduleMessageToRouter( argThat( messageMatcher ) );
 
-        RegisteredMessage answerFromRouter = new RegisteredMessage( 42L, 23L );
+        RegisteredMessage answerFromRouter = new RegisteredMessage( RequestId.of( 42L ), RegistrationId.of( 23L ) );
         subject.onRegistered( answerFromRouter );
 
-        assertEquals( 23L, handleRegistrationIdCallback.registrationId );
+        assertEquals( RegistrationId.of( 23L ), handleRegistrationIdCallback.registrationId );
         assertEquals( TEST_URI, handleRegistrationIdCallback.uri );
     }
 }

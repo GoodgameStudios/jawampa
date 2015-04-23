@@ -9,11 +9,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
  * Acknowledge sent by a Broker to a Subscriber to acknowledge
  * unsubscription. [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
  */
-public class UnsubscribedMessage extends RegisteredMessage {
+public class UnsubscribedMessage extends RequestedMessage {
     public final static int ID = 35;
 
     public UnsubscribedMessage(long requestId) {
-        super(ID, requestId);
+        super(ID, requestId, -1);
     }
 
     static class Factory implements WampMessageFactory {

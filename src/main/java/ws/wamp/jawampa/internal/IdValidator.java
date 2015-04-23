@@ -16,6 +16,9 @@
 
 package ws.wamp.jawampa.internal;
 
+import ws.wamp.jawampa.io.RequestId;
+import ws.wamp.jawampa.roles.callee.RegistrationId;
+
 /**
  * Validates whether WAMP IDs that are e.g. used in requests
  * are valid.
@@ -33,5 +36,13 @@ public class IdValidator {
     public static boolean isValidId(long id) {
         if (id >= MIN_VALID_ID && id <= MAX_VALID_ID) return true;
         return false;
+    }
+
+    public static boolean isValidId(RequestId id) {
+        return isValidId(id.getValue());
+    }
+
+    public static boolean isValidId(RegistrationId id) {
+        return isValidId(id.getValue());
     }
 }
