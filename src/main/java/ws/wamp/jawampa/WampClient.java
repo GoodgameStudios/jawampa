@@ -192,9 +192,9 @@ public class WampClient {
     private static class RegisteredProceduresMapEntry {
         public RegistrationState state;
         public long registrationId = 0;
-        public final Subscriber<? super Request> subscriber;
+        public final Subscriber<? super Response> subscriber;
         
-        public RegisteredProceduresMapEntry(Subscriber<? super Request> subscriber, RegistrationState state) {
+        public RegisteredProceduresMapEntry(Subscriber<? super Response> subscriber, RegistrationState state) {
             this.subscriber = subscriber;
             this.state = state;
         }
@@ -744,7 +744,7 @@ public class WampClient {
      * the returned Observable. This guarantees that no RPC requests get lost.
      * Incoming RPC requests will be pushed to the Subscriber via it's
      * onNext method. The Subscriber can send responses through the methods on
-     * the {@link Request}.<br>
+     * the {@link Response}.<br>
      * If the client no longer wants to provide the method it can call
      * unsubscribe() on the Subscription to unregister the procedure.<br>
      * If the connection closes onCompleted will be called.<br>
@@ -754,10 +754,10 @@ public class WampClient {
      * Must be valid WAMP URI.
      * @return An observable that can be used to provide a procedure.
      */
-    public Observable<Request> registerProcedure(final String topic) {
-        return Observable.create(new OnSubscribe<Request>() {
+    public Observable<Response> registerProcedure(final String topic) {
+        return Observable.create(new OnSubscribe<Response>() {
             @Override
-            public void call(final Subscriber<? super Request> subscriber) {
+            public void call(final Subscriber<? super Response> subscriber) {
                 try {
                     UriValidator.validate(topic);
                 }
@@ -846,7 +846,7 @@ public class WampClient {
      * if unsubscribe is called on a registered procedure.<br>
      * This action will lead to unregistering a provided function at the dealer.
      */
-    private void attachCancelRegistrationAction(final Subscriber<? super Request> subscriber,
+    private void attachCancelRegistrationAction(final Subscriber<? super Response> subscriber,
                                                 final RegisteredProceduresMapEntry mapEntry,
                                                 final String topic)
     {

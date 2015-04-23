@@ -19,7 +19,7 @@ import rx.schedulers.Schedulers;
 import rx.subjects.AsyncSubject;
 import rx.subscriptions.Subscriptions;
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.Request;
+import ws.wamp.jawampa.Response;
 import ws.wamp.jawampa.WampClient.Status;
 import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.internal.UriValidator;
@@ -45,9 +45,9 @@ public class CalleeMessageHandler extends BaseMessageHandler {
     private static class RegisteredProceduresMapEntry {
         public RegistrationState state;
         public long registrationId = 0;
-        public final Subscriber<? super Request> subscriber;
+        public final Subscriber<? super Response> subscriber;
 
-        public RegisteredProceduresMapEntry(Subscriber<? super Request> subscriber, RegistrationState state) {
+        public RegisteredProceduresMapEntry(Subscriber<? super Response> subscriber, RegistrationState state) {
             this.subscriber = subscriber;
             this.state = state;
         }
@@ -73,7 +73,7 @@ public class CalleeMessageHandler extends BaseMessageHandler {
         this.scheduler = Schedulers.from(executor);
     }
 
-    private void attachCancelRegistrationAction(final Subscriber<? super Request> subscriber,
+    private void attachCancelRegistrationAction(final Subscriber<? super Response> subscriber,
             final RegisteredProceduresMapEntry mapEntry,
             final String topic)
     {
@@ -116,10 +116,10 @@ public class CalleeMessageHandler extends BaseMessageHandler {
         }));
     }
 
-    public Observable<Request> registerProcedure(final String topic) {
-        return Observable.create(new OnSubscribe<Request>() {
+    public Observable<Response> registerProcedure(final String topic) {
+        return Observable.create(new OnSubscribe<Response>() {
             @Override
-            public void call(final Subscriber<? super Request> subscriber) {
+            public void call(final Subscriber<? super Response> subscriber) {
                 try {
                     UriValidator.validate(topic);
                 }
@@ -214,7 +214,7 @@ public class CalleeMessageHandler extends BaseMessageHandler {
         }
         else {
             // Send the request to the subscriber, which can then send responses
-            Request request = new Request(baseClient, m.requestId, m.arguments, m.argumentsKw);
+            Response request = new Response(baseClient, m.requestId, m.arguments, m.argumentsKw);
             entry.subscriber.onNext(request);
         }
     }

@@ -13,11 +13,16 @@ import java.util.concurrent.Executors;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import rx.Observable;
+import ws.wamp.jawampa.Response;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.messages.InvocationMessage;
+import ws.wamp.jawampa.messages.RegisterMessage;
+import ws.wamp.jawampa.messages.WampMessage;
 import ws.wamp.jawampa.messages.YieldMessage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,8 +49,13 @@ public class CalleeMessageHandlerTest {
     @Test
     public void testInvocation() {
         Executor executor = Executors.newFixedThreadPool( 1 );
+        
+        ArgumentCaptor<WampMessage> captor = ArgumentCaptor.forClass(WampMessage.class);
         CalleeMessageHandler subject = new CalleeMessageHandler( baseClient, executor );
-        subject.registerProcedure( "foo" );
+        Observable<Response> obs_req = subject.registerProcedure( "foo" );
+        
+        verify(baseClient).scheduleMessageToRouter( captor.capture() );
+        RegisterMessage registration_sent = (RegisterMessage)captor.getValue();
         
         long requestId = 1234567890L;
         

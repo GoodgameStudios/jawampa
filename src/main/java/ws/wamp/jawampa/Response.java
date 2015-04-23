@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * {@link #replyError(String, ArrayNode, ObjectNode)}} should be called in
  * order to send a positive or negative response back to the caller.
  */
-public class Request {
+public class Response {
     
     final BaseClient baseClient;
     final long requestId;
@@ -43,9 +43,9 @@ public class Request {
     
     volatile int replySent = 0;
     
-    private static final AtomicIntegerFieldUpdater<Request> replySentUpdater;
+    private static final AtomicIntegerFieldUpdater<Response> replySentUpdater;
     static {
-        replySentUpdater = AtomicIntegerFieldUpdater.newUpdater(Request.class, "replySent");
+        replySentUpdater = AtomicIntegerFieldUpdater.newUpdater(Response.class, "replySent");
     }
     
     public ArrayNode arguments() {
@@ -56,7 +56,7 @@ public class Request {
         return keywordArguments;
     }
 
-    public Request(BaseClient baseClient, 
+    public Response(BaseClient baseClient, 
                    long requestId, ArrayNode arguments, ObjectNode keywordArguments)
     {
         this.baseClient = baseClient;
