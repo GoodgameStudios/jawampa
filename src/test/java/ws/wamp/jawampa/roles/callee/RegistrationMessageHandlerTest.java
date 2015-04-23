@@ -43,6 +43,16 @@ public class RegistrationMessageHandlerTest {
             this.failedUri = Objects.requireNonNull( uri );
             this.failedReason = Objects.requireNonNull( reason );
         }
+
+        @Override
+        public void unregistrationComplete( RegistrationId requestId, String uri ) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void unregistrationFailed( String uri, String reason ) {
+            throw new UnsupportedOperationException();
+        }
     }
 
     @Test

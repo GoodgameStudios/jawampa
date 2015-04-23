@@ -13,7 +13,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class FunctionMapTest {
-    private class MockAction implements Action1<PendingRegistration> {
+    public static final RegistrationId SOME_REGISTRATION_ID = RegistrationId.of( 42 );
+    public static final String TEST_URI = "arbitrary_uri";
+    public static final String SOME_REASON = "I don't know whyyyyyyyyyyyyyyy";
+
+    private static class MockAction implements Action1<PendingRegistration> {
         public String uri;
 
         @Override
@@ -23,7 +27,7 @@ public class FunctionMapTest {
         }
     }
 
-    private class MockRPCImplementation implements RPCImplementation {
+    public static class MockRPCImplementation implements RPCImplementation {
         public Response req;
         public ArrayNode pos;
         public ObjectNode kw;
@@ -37,7 +41,7 @@ public class FunctionMapTest {
         }
     }
 
-    private class MockRegistrationFailedCallback implements RegistrationFailedCallback {
+    public static class MockRegistrationFailedCallback implements RegistrationFailedCallback {
         public String failedUri = null;
         public String failedReason = null;
         public RPCImplementation failedImpl = null;
@@ -48,9 +52,6 @@ public class FunctionMapTest {
             failedImpl = implementation;
         }
     }
-
-    private static final String TEST_URI = "arbitrary_uri";
-    private static final String SOME_REASON = "I don't know whyyyyyyyyyyyyyyy";
 
     @Test
     public void testNotifiesRegistrationMessageHandlerOfRegistrations() {
@@ -73,10 +74,10 @@ public class FunctionMapTest {
 
         subject.register( TEST_URI, impl );
 
-        subject.registrationComplete( RegistrationId.of( 42 ), TEST_URI );
+        subject.registrationComplete( SOME_REGISTRATION_ID, TEST_URI );
         ArrayNode pos = mapper.createArrayNode();
         ObjectNode kw = mapper.createObjectNode();
-        subject.call( RegistrationId.of( 42 ), request, pos, kw );
+        subject.call( SOME_REGISTRATION_ID, request, pos, kw );
 
         assertEquals( request, impl.req );
         assertEquals( pos, impl.pos );
@@ -131,7 +132,7 @@ public class FunctionMapTest {
 
         MockRegistrationFailedCallback callback = new MockRegistrationFailedCallback();
         subject.register( TEST_URI, impl, callback );
-        subject.registrationComplete( RegistrationId.of( 42 ), TEST_URI );
-        subject.registrationComplete( RegistrationId.of( 42 ), TEST_URI );
+        subject.registrationComplete( SOME_REGISTRATION_ID, TEST_URI );
+        subject.registrationComplete( SOME_REGISTRATION_ID, TEST_URI );
     }
 }
