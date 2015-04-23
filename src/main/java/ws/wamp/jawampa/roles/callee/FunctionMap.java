@@ -19,11 +19,13 @@ public class FunctionMap implements RegistrationStateWatcher {
     private final PublishSubject<PendingRegistration> registrationsSubject;
     private final Map<String, RPCImplementation> uri2implementation;
     private final Map<RegistrationId, String> id2uri;
+    private final Map<String, RegistrationFailedCallback> uri2failureCallback;
 
     public FunctionMap( ) {
         this.registrationsSubject = PublishSubject.create();
         uri2implementation = new HashMap<String, RPCImplementation>();
         id2uri = new HashMap<RegistrationId, String>();
+        uri2failureCallback = new HashMap<String, RegistrationFailedCallback>();
     }
 
     public PublishSubject<PendingRegistration> getRegistrationsSubject() {
@@ -31,26 +33,41 @@ public class FunctionMap implements RegistrationStateWatcher {
     }
 
     public void register( String uri, RPCImplementation implementation ) {
+        register( uri, implementation, new RegistrationFailedCallback() {
+            @Override
+            public void registrationFailed( String uri, String reason, RPCImplementation implementation ) {
+                // intentionally empty
+            }
+        });
+    }
+
+    public void register( String uri, RPCImplementation implementation, RegistrationFailedCallback failed ) {
         if ( uri2implementation.containsKey( uri ) ) {
             throw new IllegalArgumentException( "Function " + uri + " already registered" );
         }
         UriValidator.validate( uri );
         uri2implementation.put( uri, implementation );
         registrationsSubject.onNext( new PendingRegistration( uri, this ) );
-    }
-
-    public void register( String uri, RPCImplementation implementation, RegistrationFailedCallback failed ) {
-        
+        uri2failureCallback.put( uri, failed );
     }
 
     @Override
     public void registrationComplete( RegistrationId registrationId, String uri ) {
+        if (id2uri.containsKey( registrationId ) ) {
+            throw new IllegalStateException( "Uri " + uri + " registration already completed." );
+        }
         id2uri.put( registrationId, uri );
+        uri2failureCallback.remove( uri );
     }
 
     @Override
-    public void registrationFailed( RegistrationId registrationId, String uri ) {
-        
+    public void registrationFailed( String uri, String reason ) {
+        if(!uri2failureCallback.containsKey( uri ) ) {
+            throw new IllegalStateException( "Uri " + uri + " was not registered." );
+        }
+        uri2failureCallback.get( uri ).registrationFailed( uri, reason, uri2implementation.get( uri ) );
+        uri2failureCallback.remove( uri );
+        uri2implementation.remove( uri );
     }
 
     public void call( RegistrationId id, Response request, ArrayNode pos, ObjectNode kw ) {

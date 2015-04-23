@@ -37,7 +37,20 @@ public class FunctionMapTest {
         }
     }
 
+    private class MockRegistrationFailedCallback implements RegistrationFailedCallback {
+        public String failedUri = null;
+        public String failedReason = null;
+        public RPCImplementation failedImpl = null;
+        @Override
+        public void registrationFailed( String uri, String reason, RPCImplementation implementation ) {
+            failedUri = uri;
+            failedReason = reason;
+            failedImpl = implementation;
+        }
+    }
+
     private static final String TEST_URI = "arbitrary_uri";
+    private static final String SOME_REASON = "I don't know whyyyyyyyyyyyyyyy";
 
     @Test
     public void testNotifiesRegistrationMessageHandlerOfRegistrations() {
@@ -72,14 +85,53 @@ public class FunctionMapTest {
 
     @Test
     public void testRegistrationFailedCallbackIsCalledOnFailure() {
-        ObjectMapper mapper = new ObjectMapper();
         MockRPCImplementation impl = new MockRPCImplementation();
-        Response request = mock(Response.class);
 
         FunctionMap subject = new FunctionMap();
 
-        subject.register( TEST_URI, impl );
+        MockRegistrationFailedCallback callback = new MockRegistrationFailedCallback();
+        subject.register( TEST_URI, impl, callback );
 
-        subject.registrationFailed( RegistrationId.of( 42 ), TEST_URI );
+        subject.registrationFailed( TEST_URI, SOME_REASON );
+
+        assertEquals( TEST_URI, callback.failedUri );
+        assertEquals( SOME_REASON, callback.failedReason );
+        assertEquals( impl, callback.failedImpl );
+    }
+
+    @Test
+    public void testRetryRegistrationWorks() {
+        MockRPCImplementation impl = new MockRPCImplementation();
+
+        FunctionMap subject = new FunctionMap();
+
+        MockRegistrationFailedCallback callback = new MockRegistrationFailedCallback();
+        subject.register( TEST_URI, impl, callback );
+        subject.registrationFailed( TEST_URI, SOME_REASON );
+        subject.register( TEST_URI, impl, callback );
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testCallingFailedTwiceThrows() {
+        MockRPCImplementation impl = new MockRPCImplementation();
+
+        FunctionMap subject = new FunctionMap();
+
+        MockRegistrationFailedCallback callback = new MockRegistrationFailedCallback();
+        subject.register( TEST_URI, impl, callback );
+        subject.registrationFailed( TEST_URI, SOME_REASON );
+        subject.registrationFailed( TEST_URI, SOME_REASON );
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testCallingRegistrationCompleteTwiceThrows() {
+        MockRPCImplementation impl = new MockRPCImplementation();
+
+        FunctionMap subject = new FunctionMap();
+
+        MockRegistrationFailedCallback callback = new MockRegistrationFailedCallback();
+        subject.register( TEST_URI, impl, callback );
+        subject.registrationComplete( RegistrationId.of( 42 ), TEST_URI );
+        subject.registrationComplete( RegistrationId.of( 42 ), TEST_URI );
     }
 }

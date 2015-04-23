@@ -35,13 +35,17 @@ public class RegistrationMessageHandler extends BaseMessageHandler {
     @Override
     public void onRegistered( RegisteredMessage msg ) {
         requestId2CompletionCallback.get( msg.requestId ).registrationComplete( msg.registrationId, requestId2Uri.get( msg.requestId ) );
-        requestId2CompletionCallback.remove( msg.requestId );
-        requestId2Uri.remove( msg.requestId );
+        cleanup( msg.requestId );
     }
 
     @Override
     public void onRegisterError( ErrorMessage msg ) {
-        // TODO Auto-generated method stub
-        super.onRegisterError( msg );
+        requestId2CompletionCallback.get( msg.requestId ).registrationFailed( requestId2Uri.get( msg.requestId ), msg.error );
+        cleanup( msg.requestId );
+    }
+
+    private void cleanup( RequestId requestId ) {
+        requestId2CompletionCallback.remove( requestId );
+        requestId2Uri.remove( requestId );
     }
 }
