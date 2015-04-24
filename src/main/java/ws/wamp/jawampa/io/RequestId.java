@@ -36,4 +36,9 @@ public class RequestId {
             return false;
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "RequestId [value=" + value + "]";
+    }
 }

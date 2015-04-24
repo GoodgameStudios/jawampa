@@ -36,4 +36,9 @@ public class RegistrationId {
             return false;
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "RegistrationId [value=" + value + "]";
+    }
 }
