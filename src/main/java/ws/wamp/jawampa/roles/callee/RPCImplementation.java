@@ -1,7 +1,5 @@
 package ws.wamp.jawampa.roles.callee;
 
-import ws.wamp.jawampa.Response;
-
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 

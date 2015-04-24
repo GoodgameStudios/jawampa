@@ -79,6 +79,7 @@ import ws.wamp.jawampa.messages.UnsubscribeMessage;
 import ws.wamp.jawampa.messages.UnsubscribedMessage;
 import ws.wamp.jawampa.messages.WampMessage;
 import ws.wamp.jawampa.roles.callee.RegistrationId;
+import ws.wamp.jawampa.roles.callee.Response;
 import ws.wamp.jawampa.transport.WampChannelEvents;
 import ws.wamp.jawampa.transport.WampClientChannelFactory;
 
@@ -824,7 +825,7 @@ public class WampClient {
 
                                 boolean isClosed = false;
                                 if (t1 instanceof ApplicationError &&
-                                        ((ApplicationError)t1).uri.equals(ApplicationError.TRANSPORT_CLOSED))
+                                        ((ApplicationError)t1).uri().equals(ApplicationError.TRANSPORT_CLOSED))
                                     isClosed = true;
                                 
                                 if (isClosed) subscriber.onCompleted();
@@ -1034,7 +1035,7 @@ public class WampClient {
 
                                     boolean isClosed = false;
                                     if (t1 instanceof ApplicationError &&
-                                            ((ApplicationError)t1).uri.equals(ApplicationError.TRANSPORT_CLOSED))
+                                            ((ApplicationError)t1).uri().equals(ApplicationError.TRANSPORT_CLOSED))
                                         isClosed = true;
 
                                     for (Subscriber<? super PubSubData> s : newEntry.subscribers) {

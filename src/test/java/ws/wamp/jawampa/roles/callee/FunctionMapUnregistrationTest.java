@@ -13,8 +13,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import ws.wamp.jawampa.Response;
-
 public class FunctionMapUnregistrationTest {
     private FunctionMap subject = new FunctionMap();
 

@@ -19,7 +19,6 @@ import rx.schedulers.Schedulers;
 import rx.subjects.AsyncSubject;
 import rx.subscriptions.Subscriptions;
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.Response;
 import ws.wamp.jawampa.WampClient.Status;
 import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.internal.UriValidator;
@@ -31,6 +30,7 @@ import ws.wamp.jawampa.messages.RegisterMessage;
 import ws.wamp.jawampa.messages.UnregisterMessage;
 import ws.wamp.jawampa.messages.handling.BaseMessageHandler;
 import ws.wamp.jawampa.roles.callee.RegistrationId;
+import ws.wamp.jawampa.roles.callee.Response;
 
 /**
  *
@@ -216,7 +216,7 @@ public class CalleeMessageHandler extends BaseMessageHandler {
         }
         else {
             // Send the request to the subscriber, which can then send responses
-            Response request = new Response(baseClient, m.requestId, m.arguments, m.argumentsKw);
+            Response request = new Response(baseClient, m.requestId);
             entry.subscriber.onNext(request);
         }
     }

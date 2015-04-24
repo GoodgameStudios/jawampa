@@ -14,10 +14,9 @@
  * under the License.
  */
 
-package ws.wamp.jawampa;
+package ws.wamp.jawampa.roles.callee;
 
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-
+import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.internal.UriValidator;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.io.RequestId;
@@ -36,36 +35,19 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * order to send a positive or negative response back to the caller.
  */
 public class Response {
-    
-    final BaseClient baseClient;
-    final RequestId requestId;
-    final ArrayNode arguments;
-    final ObjectNode keywordArguments;
-    
-    volatile int replySent = 0;
-    
-    private static final AtomicIntegerFieldUpdater<Response> replySentUpdater;
-    static {
-        replySentUpdater = AtomicIntegerFieldUpdater.newUpdater(Response.class, "replySent");
-    }
-    
-    public ArrayNode arguments() {
-        return arguments;
-    }
-    
-    public ObjectNode keywordArguments() {
-        return keywordArguments;
-    }
+    private final BaseClient baseClient;
+    private final RequestId requestId;
 
-    public Response(BaseClient baseClient, 
-            RequestId requestId, ArrayNode arguments, ObjectNode keywordArguments)
+    private Object lock = new Object();
+
+    private boolean replySent = false;
+
+    public Response( BaseClient baseClient, RequestId requestId )
     {
         this.baseClient = baseClient;
         this.requestId = requestId;
-        this.arguments = arguments;
-        this.keywordArguments = keywordArguments;
     }
-    
+
     /**
      * Send an error message in response to the request.<br>
      * If this is called more than once then the following invocations will
@@ -74,8 +56,8 @@ public class Response {
      * as an exceptional response. Must not be null.
      */
     public void replyError(ApplicationError error) throws ApplicationError{
-        if (error == null || error.uri == null) throw new NullPointerException();
-        replyError(error.uri, error.args, error.kwArgs);
+        if (error == null || error.uri() == null) throw new NullPointerException();
+        replyError(error.uri(), error.arguments(), error.keywordArguments());
     }
     
     /**
@@ -88,11 +70,15 @@ public class Response {
      * @param keywordArguments The keyword arguments to sent in the response
      */
     public void replyError(String errorUri, ArrayNode arguments, ObjectNode keywordArguments) throws ApplicationError {
-        int replyWasSent = replySentUpdater.getAndSet(this, 1);
-        if (replyWasSent == 1) return;
-        
+        synchronized(lock) {
+            if ( replySent ) {
+                throw new IllegalStateException("Reply was already sent!");
+            }
+            replySent = true;
+        }
+
         UriValidator.validate(errorUri);
-        
+
         final ErrorMessage msg = new ErrorMessage(InvocationMessage.ID, 
                                                   requestId, null, errorUri,
                                                   arguments, keywordArguments);
@@ -108,9 +94,13 @@ public class Response {
      * @param keywordArguments The keyword arguments to sent in the response
      */
     public void reply(ArrayNode arguments, ObjectNode keywordArguments) {
-        int replyWasSent = replySentUpdater.getAndSet(this, 1);
-        if (replyWasSent == 1) return;
-        
+        synchronized(lock) {
+            if ( replySent ) {
+                throw new IllegalStateException("Reply was already sent!");
+            }
+            replySent = true;
+        }
+
         final YieldMessage msg = new YieldMessage(requestId, null,
                                                   arguments, keywordArguments);
 
