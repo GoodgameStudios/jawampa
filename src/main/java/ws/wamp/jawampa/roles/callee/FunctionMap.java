@@ -75,7 +75,12 @@ public class FunctionMap implements RegistrationStateWatcher {
             throw new IllegalArgumentException( "Function " + uri + " not registered" );
         }
         uri2unregistrationFailureCallback.put( uri, failed );
-        unregistrationsSubject.onNext( new PendingUnregistration( uri, this ) );
+        for ( RegistrationId registrationId : id2uri.keySet() ) {
+            if ( id2uri.get( registrationId ).equals( uri ) ) {
+                unregistrationsSubject.onNext( new PendingUnregistration( uri, registrationId, this ) );
+                return;
+            }
+        }
     }
 
     @Override

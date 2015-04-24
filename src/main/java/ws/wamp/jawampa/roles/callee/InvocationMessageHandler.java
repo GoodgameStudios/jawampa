@@ -1,25 +1,16 @@
 package ws.wamp.jawampa.roles.callee;
 
-import java.util.concurrent.Executor;
-
-import rx.Scheduler;
-import rx.schedulers.Schedulers;
-import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.Response;
 import ws.wamp.jawampa.io.BaseClient;
-import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.handling.BaseMessageHandler;
 
-public class InvocationHandler extends BaseMessageHandler {
+public class InvocationMessageHandler extends BaseMessageHandler {
     private final BaseClient baseClient;
-    private final Executor executor;
-    private final Scheduler scheduler;
+    private final FunctionMap functionMap;
 
-    public InvocationHandler( BaseClient baseClient, Executor executor ) {
+    public InvocationMessageHandler( BaseClient baseClient, FunctionMap functionMap ) {
         this.baseClient = baseClient;
-        this.executor = executor;
-        this.scheduler = Schedulers.from(executor);
+        this.functionMap = functionMap;
     }
 
     @Override

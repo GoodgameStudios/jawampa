@@ -63,14 +63,14 @@ public class UnregistrationMessageHandlerTest {
         UnregistrationMessageHandler subject = new UnregistrationMessageHandler( baseClient, magicAsyncQueue );
 
         MockRegistrationCallback handleRegistrationIdCallback = new MockRegistrationCallback();
-        magicAsyncQueue.onNext( new PendingUnregistration( TEST_URI, handleRegistrationIdCallback) );
+        magicAsyncQueue.onNext( new PendingUnregistration( TEST_URI, RegistrationId.of( 23L ), handleRegistrationIdCallback) );
 
         ArgumentMatcher<WampMessage> messageMatcher = new ArgumentMatcher<WampMessage>() {
             @Override
             public boolean matches( Object argument ) {
                 UnregisterMessage message = (UnregisterMessage)argument;
                 if ( !message.requestId.equals( RequestId.of( 42L ) ) ) return false;
-                if ( !message.registrationId.equals( RequestId.of( 23L ) ) ) return false;
+                if ( !message.registrationId.equals( RegistrationId.of( 23L ) ) ) return false;
                 return true;
             }
         };
@@ -91,7 +91,7 @@ public class UnregistrationMessageHandlerTest {
         UnregistrationMessageHandler subject = new UnregistrationMessageHandler( baseClient, magicAsyncQueue );
 
         MockRegistrationCallback handleRegistrationIdCallback = new MockRegistrationCallback();
-        magicAsyncQueue.onNext( new PendingUnregistration( TEST_URI, handleRegistrationIdCallback) );
+        magicAsyncQueue.onNext( new PendingUnregistration( TEST_URI, RegistrationId.of( 23L ), handleRegistrationIdCallback) );
 
         ErrorMessage answerFromRouter = new ErrorMessage( RegisterMessage.ID, RequestId.of( 42L ), null, SOME_ERROR, null, null );
         subject.onUnregisterError( answerFromRouter );
