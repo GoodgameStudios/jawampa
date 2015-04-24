@@ -5,219 +5,82 @@
  */
 package ws.wamp.jawampa.roles;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Executor;
-
-import rx.Observable;
-import rx.Observable.OnSubscribe;
-import rx.Scheduler;
-import rx.Subscriber;
-import rx.functions.Action0;
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
-import rx.subjects.AsyncSubject;
-import rx.subscriptions.Subscriptions;
-import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.WampClient.Status;
-import ws.wamp.jawampa.WampError;
-import ws.wamp.jawampa.internal.UriValidator;
 import ws.wamp.jawampa.io.BaseClient;
-import ws.wamp.jawampa.io.RequestId;
 import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.RegisterMessage;
+import ws.wamp.jawampa.messages.RegisteredMessage;
 import ws.wamp.jawampa.messages.UnregisterMessage;
+import ws.wamp.jawampa.messages.UnregisteredMessage;
 import ws.wamp.jawampa.messages.handling.BaseMessageHandler;
-import ws.wamp.jawampa.roles.callee.RegistrationId;
-import ws.wamp.jawampa.roles.callee.Response;
+import ws.wamp.jawampa.roles.callee.FunctionMap;
+import ws.wamp.jawampa.roles.callee.InvocationMessageHandler;
+import ws.wamp.jawampa.roles.callee.RPCImplementation;
+import ws.wamp.jawampa.roles.callee.RegistrationMessageHandler;
+import ws.wamp.jawampa.roles.callee.UnregistrationMessageHandler;
 
 /**
  *
  * @author hkraemer@ggs-hh.net
  */
 public class CalleeMessageHandler extends BaseMessageHandler {
-    private enum RegistrationState {
-        Registering,
-        Registered,
-        Unregistering,
-        Unregistered
-    }
+    private final FunctionMap map;
+    private final InvocationMessageHandler imh;
+    private final RegistrationMessageHandler rmh;
+    private final UnregistrationMessageHandler urmh;
 
-    private static class RegisteredProceduresMapEntry {
-        public RegistrationState state;
-        public long registrationId = 0;
-        public final Subscriber<? super Response> subscriber;
-
-        public RegisteredProceduresMapEntry(Subscriber<? super Response> subscriber, RegistrationState state) {
-            this.subscriber = subscriber;
-            this.state = state;
-        }
-    }
-
-    private final Map<Long, AsyncSubject<?>> requestIdToPendingRegistration
-            = new HashMap<Long, AsyncSubject<?>>();
-    private final Map<Long, AsyncSubject<?>> requestIdToPendingUnRegistration
-            = new HashMap<Long, AsyncSubject<?>>();
-
-    private final HashMap<String, RegisteredProceduresMapEntry> registeredProceduresByUri = 
-            new HashMap<String, RegisteredProceduresMapEntry>();
-    private final HashMap<Long, RegisteredProceduresMapEntry> registeredProceduresById = 
-            new HashMap<Long, RegisteredProceduresMapEntry>();
-
-    private final BaseClient baseClient;
-    private final Executor executor;
-    private final Scheduler scheduler;
-
-    public CalleeMessageHandler( BaseClient baseClient, Executor executor ) {
-        this.baseClient = baseClient;
-        this.executor = executor;
-        this.scheduler = Schedulers.from(executor);
-    }
-
-    private void attachCancelRegistrationAction(final Subscriber<? super Response> subscriber,
-            final RegisteredProceduresMapEntry mapEntry,
-            final String topic)
-    {
-        subscriber.add(Subscriptions.create(new Action0() {
-            @Override
-            public void call() {
-                executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mapEntry.state != RegistrationState.Registered) return;
-
-                        mapEntry.state = RegistrationState.Unregistering;
-                        registeredProceduresByUri.remove(topic);
-                        registeredProceduresById.remove(mapEntry.registrationId);
-
-                        // Make the unregister call
-                        final RequestId requestId = baseClient.getNewRequestId();
-                        final UnregisterMessage msg = new UnregisterMessage(requestId, RegistrationId.of( mapEntry.registrationId ));
-
-                        final AsyncSubject<Void> unregisterFuture = AsyncSubject.create();
-                        unregisterFuture.observeOn(scheduler)
-                                        .subscribe(new Action1<Void>() {
-                            @Override
-                            public void call(Void t1) {
-                                // Unregistration at the broker was successful
-                                mapEntry.state = RegistrationState.Unregistered;
-                            }
-                        }, new Action1<Throwable>() {
-                            @Override
-                            public void call(Throwable t1) {
-                                // Error on unregister
-                            }
-                        });
-
-                        requestIdToPendingUnRegistration.put(requestId.getValue(),  unregisterFuture);
-                        baseClient.scheduleMessageToRouter( msg );
-                    }
-                });
-            }
-        }));
-    }
-
-    public Observable<Response> registerProcedure(final String topic) {
-        return Observable.create(new OnSubscribe<Response>() {
-            @Override
-            public void call(final Subscriber<? super Response> subscriber) {
-                try {
-                    UriValidator.validate(topic);
-                }
-                catch (WampError e) {
-                    subscriber.onError(e);
-                    return;
-                }
-
-                executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        // If the Subscriber unsubscribed in the meantime we return early
-                        if (subscriber.isUnsubscribed()) return;
-                        // Set subscription to completed if we are not connected
-                        if (baseClient.connectionState() != Status.Connected) {
-                            subscriber.onCompleted();
-                            return;
-                        }
-
-                        final RegisteredProceduresMapEntry entry = registeredProceduresByUri.get(topic);
-                        // Check if we have already registered a function with the same name
-                        if (entry != null) {
-                            subscriber.onError(
-                                new ApplicationError(ApplicationError.PROCEDURE_ALREADY_EXISTS));
-                            return;
-                        }
-
-                        // Insert a new entry in the subscription map
-                        final RegisteredProceduresMapEntry newEntry = 
-                            new RegisteredProceduresMapEntry(subscriber, RegistrationState.Registering);
-                        registeredProceduresByUri.put(topic, newEntry);
-
-                        // Make the subscribe call
-                        final RequestId requestId = baseClient.getNewRequestId();
-                        final RegisterMessage msg = new RegisterMessage(requestId, null, topic);
-
-                        final AsyncSubject<Long> registerFuture = AsyncSubject.create();
-                        registerFuture.observeOn(scheduler)
-                                      .subscribe(new Action1<Long>() {
-                            @Override
-                            public void call(Long t1) {
-                                // Check if we were unsubscribed (through transport close)
-                                if (newEntry.state != RegistrationState.Registering) return;
-                                // Registration at the broker was successful
-                                newEntry.state = RegistrationState.Registered;
-                                newEntry.registrationId = t1;
-                                registeredProceduresById.put(t1, newEntry);
-                                // Add the cancellation functionality to the subscriber
-                                attachCancelRegistrationAction(subscriber, newEntry, topic);
-                            }
-                        }, new Action1<Throwable>() {
-                            @Override
-                            public void call(Throwable t1) {
-                                // Error on registering
-                                if (newEntry.state != RegistrationState.Registering) return;
-                                // Remark: Actually noone can't unregister until this Future completes because
-                                // the unregister functionality is only added in the success case
-                                // However a transport close event could set us to Unregistered early
-                                newEntry.state = RegistrationState.Unregistered;
-
-                                boolean isClosed = false;
-                                if (t1 instanceof ApplicationError &&
-                                        ((ApplicationError)t1).uri().equals(ApplicationError.TRANSPORT_CLOSED))
-                                    isClosed = true;
-
-                                if (isClosed) subscriber.onCompleted();
-                                else subscriber.onError(t1);
-
-                                registeredProceduresByUri.remove(topic);
-                            }
-                        });
-
-                        requestIdToPendingRegistration.put(requestId.getValue(), registerFuture);
-                        baseClient.scheduleMessageToRouter(msg);
-                    }
-                });
-            }
-        });
+    public CalleeMessageHandler( BaseClient baseClient ) {
+        map = new FunctionMap();
+        imh = new InvocationMessageHandler( baseClient, map );
+        rmh = new RegistrationMessageHandler( baseClient, map.getRegistrationsSubject() );
+        urmh = new UnregistrationMessageHandler( baseClient, map.getUnregistrationsSubject() );
     }
 
     @Override
-    public void onInvocation( InvocationMessage m ) {
-        RegisteredProceduresMapEntry entry = registeredProceduresById.get(m.registrationId);
-        if (entry == null || entry.state != RegistrationState.Registered) {
-            // Send an error that we are no longer registered
-            baseClient.scheduleMessageToRouter( new ErrorMessage( InvocationMessage.ID,
-                                                                  m.requestId,
-                                                                  null,
-                                                                  ApplicationError.NO_SUCH_PROCEDURE,
-                                                                  null,
-                                                                  null ) );
-        }
-        else {
-            // Send the request to the subscriber, which can then send responses
-            Response request = new Response(baseClient, m.requestId);
-            entry.subscriber.onNext(request);
-        }
+    public void onRegister( RegisterMessage msg ) {
+        rmh.onRegister( msg );
+    }
+
+    @Override
+    public void onRegistered( RegisteredMessage msg ) {
+        rmh.onRegistered( msg );
+    }
+
+    @Override
+    public void onRegisterError( ErrorMessage msg ) {
+        rmh.onRegisterError( msg );
+    }
+
+    @Override
+    public void onUnregister( UnregisterMessage msg ) {
+        urmh.onUnregister( msg );
+    }
+
+    @Override
+    public void onUnregistered( UnregisteredMessage msg ) {
+        urmh.onUnregistered( msg );
+    }
+
+    @Override
+    public void onUnregisterError( ErrorMessage msg ) {
+        urmh.onUnregisterError( msg );
+    }
+
+    @Override
+    public void onInvocation( InvocationMessage msg ) {
+        imh.onInvocation( msg );
+    }
+
+    @Override
+    public void onInvocationError( ErrorMessage msg ) {
+        imh.onInvocationError( msg );
+    }
+
+    public void register( String uri, RPCImplementation implementation ) {
+        map.register( uri, implementation );
+    }
+
+    public void unregister( String uri ) {
+        map.unregister( uri );
     }
 }
