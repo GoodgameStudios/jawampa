@@ -116,6 +116,10 @@ public class FunctionMap implements RegistrationStateWatcher {
         uri2unregistrationFailureCallback.remove( uri );
     }
 
+    public boolean isRegistered( RegistrationId registrationId ) {
+        return id2uri.containsKey( registrationId );
+    }
+
     public void call( RegistrationId registrationId, Response request, ArrayNode pos, ObjectNode kw ) {
         if( id2uri.containsKey( registrationId ) ) {
             uri2implementation.get( id2uri.get( registrationId ) ).call( request, pos, kw );

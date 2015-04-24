@@ -101,4 +101,56 @@ public class ErrorMessage extends WampMessage {
             client.onErrorReply( requestId.getValue(), requestType, new ApplicationError(error, arguments, argumentsKw) );
         }
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ( ( arguments == null ) ? 0 : arguments.hashCode() );
+        result = prime * result + ( ( argumentsKw == null ) ? 0 : argumentsKw.hashCode() );
+        result = prime * result + ( ( details == null ) ? 0 : details.hashCode() );
+        result = prime * result + ( ( error == null ) ? 0 : error.hashCode() );
+        result = prime * result + ( ( requestId == null ) ? 0 : requestId.hashCode() );
+        result = prime * result + requestType;
+        return result;
+    }
+
+    @Override
+    public boolean equals( Object obj ) {
+        if ( this == obj )
+            return true;
+        if ( obj == null )
+            return false;
+        if ( getClass() != obj.getClass() )
+            return false;
+        ErrorMessage other = (ErrorMessage)obj;
+        if ( arguments == null ) {
+            if ( other.arguments != null )
+                return false;
+        } else if ( !arguments.equals( other.arguments ) )
+            return false;
+        if ( argumentsKw == null ) {
+            if ( other.argumentsKw != null )
+                return false;
+        } else if ( !argumentsKw.equals( other.argumentsKw ) )
+            return false;
+        if ( details == null ) {
+            if ( other.details != null )
+                return false;
+        } else if ( !details.equals( other.details ) )
+            return false;
+        if ( error == null ) {
+            if ( other.error != null )
+                return false;
+        } else if ( !error.equals( other.error ) )
+            return false;
+        if ( requestId == null ) {
+            if ( other.requestId != null )
+                return false;
+        } else if ( !requestId.equals( other.requestId ) )
+            return false;
+        if ( requestType != other.requestType )
+            return false;
+        return true;
+    }
 }

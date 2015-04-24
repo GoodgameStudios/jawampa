@@ -1,6 +1,8 @@
 package ws.wamp.jawampa.roles.callee;
 
+import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.io.BaseClient;
+import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.handling.BaseMessageHandler;
 
@@ -15,21 +17,18 @@ public class InvocationMessageHandler extends BaseMessageHandler {
 
     @Override
     public void onInvocation( InvocationMessage m ) {
-//        RegisteredProceduresMapEntry entry = registeredProceduresById.get(m.registrationId);
-//        if (entry == null || entry.state != RegistrationState.Registered) {
-//            // Send an error that we are no longer registered
-//            baseClient.scheduleMessageToRouter( new ErrorMessage( InvocationMessage.ID,
-//                                                                  m.requestId,
-//                                                                  null,
-//                                                                  ApplicationError.NO_SUCH_PROCEDURE,
-//                                                                  null,
-//                                                                  null ) );
-//        }
-//        else {
-//            // Send the request to the subscriber, which can then send responses
-//            Request request = new Request(baseClient, m.requestId, m.arguments, m.argumentsKw);
-//            entry.subscriber.onNext(request);
-//        }
+        if ( functionMap.isRegistered( m.registrationId ) ) {
+            functionMap.call( m.registrationId,
+                              new Response( baseClient, m.requestId ),
+                              m.arguments,
+                              m.argumentsKw );
+        } else {
+            baseClient.scheduleMessageToRouter( new ErrorMessage( InvocationMessage.ID,
+                                                                  m.requestId,
+                                                                  null,
+                                                                  ApplicationError.NO_SUCH_PROCEDURE,
+                                                                  null,
+                                                                  null ) );
+        }
     }
-
 }
