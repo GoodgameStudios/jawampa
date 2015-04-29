@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * TODO:
  * - missing roles
  * - reconnect
+ * - check connection state ( messages during session establishment vs messages with established session )
  */
 
 public class WampClientImpl implements WampClient, BaseClient {
@@ -49,7 +50,7 @@ public class WampClientImpl implements WampClient, BaseClient {
         connection = new NettyConnection( channelFactory );
 
         callee = new Callee( this );
-        clientConnection = new ClientConnection( this, realm, roles, authId, authMethods, mapper );
+        clientConnection = new ClientConnection( this, realm, roles, authId, authMethods, mapper, connection.getStatusObservable() );
 
         messageHandler = new WampPeerBuilder().withCallee( callee )
                                               .withHandshakingClient( clientConnection )

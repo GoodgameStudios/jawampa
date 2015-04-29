@@ -3,8 +3,12 @@ package ws.wamp.jawampa.roles;
 import java.util.List;
 import java.util.Set;
 
+import rx.Observable;
+import rx.subjects.BehaviorSubject;
+import ws.wamp.jawampa.WampClient.Status;
 import ws.wamp.jawampa.WampRoles;
 import ws.wamp.jawampa.auth.client.ClientSideAuthentication;
+import ws.wamp.jawampa.ids.SessionId;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.messages.AbortMessage;
 import ws.wamp.jawampa.messages.ChallengeMessage;
@@ -23,19 +27,24 @@ public class ClientConnection extends BaseMessageHandler {
     private final String authId;
     private final List<ClientSideAuthentication> authMethods;
     private final ObjectMapper mapper;
+    private final BehaviorSubject<Status> statusObservable;
+
+    private SessionId sessionId;
 
     public ClientConnection( BaseClient baseClient,
                              String realm,
                              Set<WampRoles> roles,
                              String authId,
                              List<ClientSideAuthentication> authMethods,
-                             ObjectMapper mapper ) {
+                             ObjectMapper mapper,
+                             BehaviorSubject<Status> statusObservable ) {
         this.baseClient = baseClient;
         this.realm = realm;
         this.roles = roles;
         this.authId = authId;
         this.authMethods = authMethods;
         this.mapper = mapper;
+        this.statusObservable = statusObservable;
     }
 
     @Override
@@ -46,8 +55,9 @@ public class ClientConnection extends BaseMessageHandler {
 
     @Override
     public void onWelcome( WelcomeMessage msg ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        // FIXME: Save stuff from welcome message
+        sessionId = msg.sessionId;
+        statusObservable.onNext( Status.CONNECTED );
     }
 
     @Override
