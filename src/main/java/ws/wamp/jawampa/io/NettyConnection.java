@@ -10,6 +10,9 @@ import io.netty.channel.nio.NioEventLoopGroup;
 
 import java.util.concurrent.ThreadFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import rx.subjects.BehaviorSubject;
 import rx.subjects.PublishSubject;
 import ws.wamp.jawampa.WampClient.Status;
@@ -18,6 +21,8 @@ import ws.wamp.jawampa.transport.WampChannelEvents;
 import ws.wamp.jawampa.transport.WampClientChannelFactory;
 
 public class NettyConnection {
+    private static final Logger log = LoggerFactory.getLogger( NettyConnection.class );
+
     private final BehaviorSubject<Status> statusObservable = BehaviorSubject.create( Status.DISCONNECTED );
     private final PublishSubject<WampMessage> messageObservable = PublishSubject.create();
 
@@ -89,6 +94,7 @@ public class NettyConnection {
         eventLoop.execute( new Runnable() {
             @Override
             public void run() {
+                log.debug( "Outgoing message: " + msg );
                 channel.writeAndFlush( msg );
             }
         });
@@ -105,6 +111,7 @@ public class NettyConnection {
     private class MySessionHandler extends SimpleChannelInboundHandler<WampMessage> {
         @Override
         protected void channelRead0( ChannelHandlerContext ctx, WampMessage msg ) throws Exception {
+            log.debug( "Incoming message: " + msg );
             messageObservable.onNext( msg );
         }
 

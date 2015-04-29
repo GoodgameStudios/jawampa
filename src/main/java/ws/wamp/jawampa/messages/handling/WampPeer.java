@@ -214,5 +214,5 @@ public class WampPeer implements MessageHandler {
         if ( publisher != null ) publisher.onError( msg );
         if ( handshakingClient != null ) handshakingClient.onError( msg );
         if ( handshakingRouter != null ) handshakingRouter.onError( msg );
-    }    
+    }
 }
