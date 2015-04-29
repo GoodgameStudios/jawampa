@@ -17,9 +17,9 @@
 package ws.wamp.jawampa.roles.callee;
 
 import ws.wamp.jawampa.ApplicationError;
+import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.internal.UriValidator;
 import ws.wamp.jawampa.io.BaseClient;
-import ws.wamp.jawampa.io.RequestId;
 import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.YieldMessage;

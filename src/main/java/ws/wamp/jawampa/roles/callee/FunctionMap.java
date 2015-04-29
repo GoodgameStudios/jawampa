@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import rx.subjects.PublishSubject;
+import ws.wamp.jawampa.ids.RegistrationId;
 import ws.wamp.jawampa.internal.UriValidator;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;

@@ -1,6 +1,7 @@
 package ws.wamp.jawampa.io;
 
 import ws.wamp.jawampa.WampClient;
+import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.messages.WampMessage;
 
 /**

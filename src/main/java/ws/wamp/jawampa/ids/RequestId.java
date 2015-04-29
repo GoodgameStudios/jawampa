@@ -1,14 +1,14 @@
-package ws.wamp.jawampa.roles.callee;
+package ws.wamp.jawampa.ids;
 
-public class RegistrationId {
+public class RequestId {
     private final long value;
 
-    private RegistrationId( long value ) {
+    private RequestId( long value ) {
         this.value = value;
     }
 
-    public static RegistrationId of( long value ) {
-        return new RegistrationId( value );
+    public static RequestId of( long value ) {
+        return new RequestId( value );
     }
 
     public long getValue() {
@@ -31,7 +31,7 @@ public class RegistrationId {
             return false;
         if ( getClass() != obj.getClass() )
             return false;
-        RegistrationId other = (RegistrationId)obj;
+        RequestId other = (RequestId)obj;
         if ( value != other.value )
             return false;
         return true;
@@ -39,6 +39,6 @@ public class RegistrationId {
 
     @Override
     public String toString() {
-        return "RegistrationId [value=" + value + "]";
+        return "RequestId [value=" + value + "]";
     }
 }

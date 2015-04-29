@@ -16,8 +16,8 @@
 
 package ws.wamp.jawampa.internal;
 
-import ws.wamp.jawampa.io.RequestId;
-import ws.wamp.jawampa.roles.callee.RegistrationId;
+import ws.wamp.jawampa.ids.RegistrationId;
+import ws.wamp.jawampa.ids.RequestId;
 
 /**
  * Validates whether WAMP IDs that are e.g. used in requests

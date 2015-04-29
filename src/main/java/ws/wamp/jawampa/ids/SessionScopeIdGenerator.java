@@ -1,4 +1,4 @@
-package ws.wamp.jawampa.internal;
+package ws.wamp.jawampa.ids;
 
 // See https://github.com/tavendo/WAMP/blob/master/spec/basic.md#ids
 public class SessionScopeIdGenerator {

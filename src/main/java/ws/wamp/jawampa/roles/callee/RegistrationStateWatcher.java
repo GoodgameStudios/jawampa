@@ -1,5 +1,7 @@
 package ws.wamp.jawampa.roles.callee;
 
+import ws.wamp.jawampa.ids.RegistrationId;
+
 
 public interface RegistrationStateWatcher {
     void registrationComplete( RegistrationId registrationId, String uri );

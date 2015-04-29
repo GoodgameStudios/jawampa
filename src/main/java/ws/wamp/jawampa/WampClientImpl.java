@@ -6,10 +6,10 @@ import java.util.concurrent.Future;
 
 import rx.Observable;
 import ws.wamp.jawampa.auth.client.ClientSideAuthentication;
-import ws.wamp.jawampa.internal.SessionScopeIdGenerator;
+import ws.wamp.jawampa.ids.RequestId;
+import ws.wamp.jawampa.ids.SessionScopeIdGenerator;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.io.NettyConnection;
-import ws.wamp.jawampa.io.RequestId;
 import ws.wamp.jawampa.messages.WampMessage;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 import ws.wamp.jawampa.messages.handling.WampPeerBuilder;

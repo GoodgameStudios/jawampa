@@ -2,9 +2,9 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
-import ws.wamp.jawampa.io.RequestId;
+import ws.wamp.jawampa.ids.RegistrationId;
+import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
-import ws.wamp.jawampa.roles.callee.RegistrationId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -10,8 +10,9 @@ import static org.mockito.Mockito.when;
 import org.junit.Test;
 
 import ws.wamp.jawampa.ApplicationError;
+import ws.wamp.jawampa.ids.RegistrationId;
+import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.io.BaseClient;
-import ws.wamp.jawampa.io.RequestId;
 import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
 

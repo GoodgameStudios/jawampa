@@ -1,5 +1,7 @@
 package ws.wamp.jawampa.roles.callee;
 
+import ws.wamp.jawampa.ids.RegistrationId;
+
 public class PendingUnregistration {
     private final String uri;
     private final RegistrationId registrationId;

@@ -37,11 +37,12 @@ import java.util.concurrent.ThreadFactory;
 
 import rx.Scheduler;
 import rx.schedulers.Schedulers;
+import ws.wamp.jawampa.ids.RegistrationId;
+import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.internal.IdGenerator;
 import ws.wamp.jawampa.internal.IdValidator;
 import ws.wamp.jawampa.internal.RealmConfig;
 import ws.wamp.jawampa.internal.UriValidator;
-import ws.wamp.jawampa.io.RequestId;
 import ws.wamp.jawampa.messages.AbortMessage;
 import ws.wamp.jawampa.messages.CallMessage;
 import ws.wamp.jawampa.messages.ErrorMessage;
@@ -63,7 +64,6 @@ import ws.wamp.jawampa.messages.UnsubscribedMessage;
 import ws.wamp.jawampa.messages.WampMessage;
 import ws.wamp.jawampa.messages.WelcomeMessage;
 import ws.wamp.jawampa.messages.YieldMessage;
-import ws.wamp.jawampa.roles.callee.RegistrationId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

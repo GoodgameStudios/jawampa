@@ -2,7 +2,7 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
-import ws.wamp.jawampa.io.RequestId;
+import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;

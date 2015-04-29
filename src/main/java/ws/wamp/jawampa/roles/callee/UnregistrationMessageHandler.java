@@ -5,8 +5,9 @@ import java.util.Map;
 
 import rx.functions.Action1;
 import rx.subjects.PublishSubject;
+import ws.wamp.jawampa.ids.RegistrationId;
+import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.io.BaseClient;
-import ws.wamp.jawampa.io.RequestId;
 import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.UnregisterMessage;
 import ws.wamp.jawampa.messages.UnregisteredMessage;
