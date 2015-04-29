@@ -107,7 +107,7 @@ public class WampClientBuilder {
         WampClientChannelFactory channelFactory = 
             WampClientChannelFactoryResolver.getFactory(routerUri, sslContext);
         
-        return new WampClient(routerUri, realm, rolesArray, closeOnErrors, 
+        return new WampClientImpl(routerUri, realm, rolesArray, closeOnErrors, 
                 channelFactory, nrReconnects, reconnectInterval, authId, authMethods);
     }
     
