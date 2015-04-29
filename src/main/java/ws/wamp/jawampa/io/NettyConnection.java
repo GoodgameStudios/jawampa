@@ -111,7 +111,7 @@ public class NettyConnection {
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
             if (evt == WampChannelEvents.WEBSOCKET_CONN_ESTABLISHED) {
-                statusObservable.onNext( Status.CONNECTED );
+                statusObservable.onNext( Status.SESSION_ESTABLISHING );
             } else if (evt == WampChannelEvents.WEBSOCKET_CLOSE_RECEIVED) {
                 statusObservable.onNext( Status.DISCONNECTED );
             }

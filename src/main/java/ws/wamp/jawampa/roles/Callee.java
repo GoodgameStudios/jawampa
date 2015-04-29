@@ -23,13 +23,13 @@ import ws.wamp.jawampa.roles.callee.UnregistrationMessageHandler;
  *
  * @author hkraemer@ggs-hh.net
  */
-public class CalleeMessageHandler extends BaseMessageHandler {
+public class Callee extends BaseMessageHandler {
     private final FunctionMap map;
     private final InvocationMessageHandler imh;
     private final RegistrationMessageHandler rmh;
     private final UnregistrationMessageHandler urmh;
 
-    public CalleeMessageHandler( BaseClient baseClient ) {
+    public Callee( BaseClient baseClient ) {
         map = new FunctionMap();
         imh = new InvocationMessageHandler( baseClient, map );
         rmh = new RegistrationMessageHandler( baseClient, map.getRegistrationsSubject() );

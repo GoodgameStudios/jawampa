@@ -6,7 +6,7 @@ import ws.wamp.jawampa.messages.GoodbyeMessage;
 import ws.wamp.jawampa.messages.WelcomeMessage;
 import ws.wamp.jawampa.messages.handling.BaseMessageHandler;
 
-public class ClientConnectionMessageHandler extends BaseMessageHandler {
+public class ClientConnection extends BaseMessageHandler {
     @Override
     public void onChallenge( ChallengeMessage msg ) {
         // TODO Auto-generated method stub

@@ -13,7 +13,7 @@ import ws.wamp.jawampa.io.NettyConnection;
 import ws.wamp.jawampa.messages.WampMessage;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 import ws.wamp.jawampa.messages.handling.WampPeerBuilder;
-import ws.wamp.jawampa.roles.CalleeMessageHandler;
+import ws.wamp.jawampa.roles.Callee;
 import ws.wamp.jawampa.roles.callee.RPCImplementation;
 import ws.wamp.jawampa.transport.WampClientChannelFactory;
 
@@ -33,14 +33,14 @@ public class WampClientImpl implements WampClient, BaseClient {
     private final ObjectMapper mapper = new ObjectMapper();
     private final SessionScopeIdGenerator sessionScopeIdGenerator = new SessionScopeIdGenerator();
 
-    private final CalleeMessageHandler calleeMessageHandler;
+    private final Callee calleeMessageHandler;
 
     public WampClientImpl( URI routerUri, String realm, WampRoles[] rolesArray, boolean closeOnErrors, WampClientChannelFactory channelFactory,
             int nrReconnects, int reconnectInterval, String authId, List<ClientSideAuthentication> authMethods ) {
         // TODO Auto-generated constructor stub
         connection = new NettyConnection( channelFactory );
 
-        calleeMessageHandler = new CalleeMessageHandler( this );
+        calleeMessageHandler = new Callee( this );
         messageHandler = new WampPeerBuilder().withCallee( calleeMessageHandler )
                                               .build();
     }

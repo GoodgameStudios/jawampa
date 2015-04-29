@@ -37,6 +37,8 @@ public interface WampClient {
         DISCONNECTED,
         /** The session is trying to connect to the router */
         CONNECTING,
+        /** Our underlying connection is established, now we are establishing the WAMP session */
+        SESSION_ESTABLISHING,
         /** The session is connected to the router */
         CONNECTED
     }
