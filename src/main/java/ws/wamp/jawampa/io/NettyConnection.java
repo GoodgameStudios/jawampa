@@ -12,20 +12,12 @@ import java.util.concurrent.ThreadFactory;
 
 import rx.subjects.BehaviorSubject;
 import rx.subjects.PublishSubject;
+import ws.wamp.jawampa.WampClient.Status;
 import ws.wamp.jawampa.messages.WampMessage;
 import ws.wamp.jawampa.transport.WampChannelEvents;
 import ws.wamp.jawampa.transport.WampClientChannelFactory;
 
 public class NettyConnection {
-    public static enum Status {
-        /** The session is not connected */
-        DISCONNECTED,
-        /** The session is trying to connect to the router */
-        CONNECTING,
-        /** The session is connected to the router */
-        CONNECTED
-    }
-
     private final BehaviorSubject<Status> statusObservable = BehaviorSubject.create( Status.DISCONNECTED );
     private final PublishSubject<WampMessage> messageObservable = PublishSubject.create();
 
