@@ -2,6 +2,7 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.ids.SessionId;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,10 +16,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public class WelcomeMessage extends WampMessage {
     public final static int ID = 2;
-    public final long sessionId;
+    public final SessionId sessionId;
     public final ObjectNode details;
 
-    public WelcomeMessage(long sessionId, ObjectNode details) {
+    public WelcomeMessage(SessionId sessionId, ObjectNode details) {
         this.sessionId = sessionId;
         this.details = details;
     }
@@ -26,7 +27,7 @@ public class WelcomeMessage extends WampMessage {
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
         messageNode.add(ID);
-        messageNode.add(sessionId);
+        messageNode.add(sessionId.getValue());
         if (details != null)
             messageNode.add(details);
         else
@@ -44,7 +45,7 @@ public class WelcomeMessage extends WampMessage {
 
             long sessionId = messageNode.get(1).asLong();
             ObjectNode details = (ObjectNode) messageNode.get(2);
-            return new WelcomeMessage(sessionId, details);
+            return new WelcomeMessage(SessionId.of( sessionId ), details);
         }
     }
 

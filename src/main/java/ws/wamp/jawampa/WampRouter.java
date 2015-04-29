@@ -39,6 +39,7 @@ import rx.Scheduler;
 import rx.schedulers.Schedulers;
 import ws.wamp.jawampa.ids.RegistrationId;
 import ws.wamp.jawampa.ids.RequestId;
+import ws.wamp.jawampa.ids.SessionId;
 import ws.wamp.jawampa.internal.IdGenerator;
 import ws.wamp.jawampa.internal.IdValidator;
 import ws.wamp.jawampa.internal.RealmConfig;
@@ -760,7 +761,7 @@ public class WampRouter {
         }
         
         // Respond with the WELCOME message
-        WelcomeMessage welcome = new WelcomeMessage(channelHandler.sessionId, welcomeDetails);
+        WelcomeMessage welcome = new WelcomeMessage(SessionId.of( channelHandler.sessionId ), welcomeDetails);
         channelHandler.ctx.writeAndFlush(welcome);
     }
     
