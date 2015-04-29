@@ -23,5 +23,10 @@ public enum WampChannelEvents {
     /**
      * The websocket connection to a remote peer was established
      */
-    WEBSOCKET_CONN_ESTABLISHED
+    WEBSOCKET_CONN_ESTABLISHED,
+
+    /**
+     * The remote peer is requesting to close the connection.
+     */
+    WEBSOCKET_CLOSE_RECEIVED,
 }

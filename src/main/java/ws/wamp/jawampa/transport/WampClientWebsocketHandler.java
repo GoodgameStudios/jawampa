@@ -29,29 +29,14 @@ public class WampClientWebsocketHandler extends ChannelInboundHandlerAdapter {
     
     final WebSocketClientHandshaker handshaker;
     
-    Serialization serialization;
-    
-    public Serialization serialization() {
-        return serialization;
-    }
-    
     public WampClientWebsocketHandler(WebSocketClientHandshaker handshaker) {
         this.handshaker = handshaker;
     }
     
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        ctx.fireChannelActive();
-    }
-    
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        ctx.fireChannelInactive();
-    }
-    
-    @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof CloseWebSocketFrame) {
+            ctx.fireUserEventTriggered( WampChannelEvents.WEBSOCKET_CLOSE_RECEIVED );
             //readState = ReadState.Closed;
             handshaker.close(ctx.channel(), (CloseWebSocketFrame) msg)
                       .addListener(ChannelFutureListener.CLOSE);
@@ -65,7 +50,7 @@ public class WampClientWebsocketHandler extends ChannelInboundHandlerAdapter {
         if (evt == WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HANDSHAKE_COMPLETE) {
             // Handshake is completed
             String actualProtocol = handshaker.actualSubprotocol();
-            serialization = Serialization.fromString(actualProtocol);
+            Serialization serialization = Serialization.fromString(actualProtocol);
             if (serialization == Serialization.Invalid) {
                 throw new WampError("Invalid Websocket Protocol");
             }
