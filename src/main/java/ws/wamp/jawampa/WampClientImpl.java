@@ -6,95 +6,131 @@ import java.util.concurrent.Future;
 
 import rx.Observable;
 import ws.wamp.jawampa.auth.client.ClientSideAuthentication;
-import ws.wamp.jawampa.roles.callee.Response;
+import ws.wamp.jawampa.internal.SessionScopeIdGenerator;
+import ws.wamp.jawampa.io.BaseClient;
+import ws.wamp.jawampa.io.NettyConnection;
+import ws.wamp.jawampa.io.RequestId;
+import ws.wamp.jawampa.messages.WampMessage;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
+import ws.wamp.jawampa.messages.handling.WampPeerBuilder;
+import ws.wamp.jawampa.roles.CalleeMessageHandler;
+import ws.wamp.jawampa.roles.callee.RPCImplementation;
 import ws.wamp.jawampa.transport.WampClientChannelFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class WampClientImpl implements WampClient {
+/*
+ * TODO:
+ * - missing roles
+ * - reconnect
+ */
+
+public class WampClientImpl implements WampClient, BaseClient {
+    private final NettyConnection connection;
+    private final MessageHandler messageHandler;
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final SessionScopeIdGenerator sessionScopeIdGenerator = new SessionScopeIdGenerator();
+
+    private final CalleeMessageHandler calleeMessageHandler;
 
     public WampClientImpl( URI routerUri, String realm, WampRoles[] rolesArray, boolean closeOnErrors, WampClientChannelFactory channelFactory,
             int nrReconnects, int reconnectInterval, String authId, List<ClientSideAuthentication> authMethods ) {
         // TODO Auto-generated constructor stub
+        connection = new NettyConnection( channelFactory );
+
+        calleeMessageHandler = new CalleeMessageHandler( this );
+        messageHandler = new WampPeerBuilder().withCallee( calleeMessageHandler )
+                                              .build();
     }
 
     @Override
     public void open() {
-        // TODO Auto-generated method stub
-
+        connection.connect();
     }
 
     @Override
     public void close() {
-        // TODO Auto-generated method stub
-
+        connection.disconnect();
     }
 
     @Override
     public Observable<Status> statusChanged() {
-        // TODO Auto-generated method stub
-        return null;
+        return connection.getStatusObservable();
     }
 
     @Override
     public Observable<Long> publish( String topic, Object... args ) {
         // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Observable<Long> publish( String topic, PubSubData event ) {
         // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Observable<Long> publish( String topic, ArrayNode arguments, ObjectNode argumentsKw ) {
         // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Observable<Response> registerProcedure( String topic ) {
-        // TODO Auto-generated method stub
-        return null;
+    public void registerProcedure( String topic, RPCImplementation implementation ) {
+        calleeMessageHandler.register( topic, implementation );
     }
 
     @Override
     public <T> Observable<T> makeSubscription( String topic, Class<T> eventClass ) {
         // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Observable<PubSubData> makeSubscription( String topic ) {
         // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Observable<Reply> call( String procedure, ArrayNode arguments, ObjectNode argumentsKw ) {
         // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Observable<Reply> call( String procedure, Object... args ) {
         // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> Observable<T> call( String procedure, Class<T> returnValueClass, Object... args ) {
         // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Future<Void> getTerminationFuture() {
         // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
+    @Override
+    public void scheduleMessageToRouter( WampMessage message ) {
+        connection.sendMessage( message );
+    }
+
+    @Override
+    public RequestId getNewRequestId() {
+        return RequestId.of( sessionScopeIdGenerator.nextId() );
+    }
+
+    @Override
+    public Status connectionState() {
+        return connection.getStatusObservable().getValue();
+    }
 }

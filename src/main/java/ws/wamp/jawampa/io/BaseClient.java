@@ -10,5 +10,4 @@ public interface BaseClient {
     void scheduleMessageToRouter( WampMessage message );
     RequestId getNewRequestId();
     WampClient.Status connectionState();
-    void setConnectionState( WampClient.Status status );
 }

@@ -85,8 +85,13 @@ public class NettyConnection {
         channel.disconnect();
     }
 
-    public void sendMessage( WampMessage msg ) {
-        channel.writeAndFlush( msg );
+    public void sendMessage( final WampMessage msg ) {
+        eventLoop.execute( new Runnable() {
+            @Override
+            public void run() {
+                channel.writeAndFlush( msg );
+            }
+        });
     }
 
     public BehaviorSubject<Status> getStatusObservable() {

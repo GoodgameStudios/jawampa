@@ -19,7 +19,7 @@ package ws.wamp.jawampa;
 import java.util.concurrent.Future;
 
 import rx.Observable;
-import ws.wamp.jawampa.roles.callee.Response;
+import ws.wamp.jawampa.roles.callee.RPCImplementation;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -119,21 +119,13 @@ public interface WampClient {
     /**
      * Registers a procedure at the router which will afterwards be available
      * for remote procedure calls from other clients.<br>
-     * The actual registration will only happen after the user subscribes on
-     * the returned Observable. This guarantees that no RPC requests get lost.
-     * Incoming RPC requests will be pushed to the Subscriber via it's
-     * onNext method. The Subscriber can send responses through the methods on
-     * the {@link Response}.<br>
-     * If the client no longer wants to provide the method it can call
-     * unsubscribe() on the Subscription to unregister the procedure.<br>
-     * If the connection closes onCompleted will be called.<br>
-     * In case of errors during subscription onError will be called.
      * @param topic The name of the procedure which this client wants to
      * provide.<br>
      * Must be valid WAMP URI.
-     * @return An observable that can be used to provide a procedure.
+     * @param rpc The RPCImplementation that gets called
      */
-    public Observable<Response> registerProcedure(final String topic);
+    // TODO: Maybe we want to return to the old API here?
+    public void registerProcedure(final String topic, RPCImplementation rpc);
     
 
     /**
