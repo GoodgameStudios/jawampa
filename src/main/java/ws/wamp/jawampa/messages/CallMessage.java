@@ -3,6 +3,7 @@ package ws.wamp.jawampa.messages;
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.io.RequestId;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -79,5 +80,10 @@ public class CallMessage extends WampMessage {
             return new CallMessage(RequestId.of( requestId ), options, procedure,
                     arguments, argumentsKw);
         }
+    }
+
+    @Override
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onCall( this );
     }
 }

@@ -1,9 +1,9 @@
 package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.io.RequestId;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 import ws.wamp.jawampa.roles.callee.RegistrationId;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -85,7 +85,7 @@ public class InvocationMessage extends WampMessage {
     }
 
     @Override
-    public void onMessage( WampClient client ) {
-        client.onInvocation( this );
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onInvocation( this );
     }
 }

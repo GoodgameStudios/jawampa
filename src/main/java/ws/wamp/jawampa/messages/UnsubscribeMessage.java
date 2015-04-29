@@ -2,6 +2,7 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,5 +43,10 @@ public class UnsubscribeMessage extends WampMessage {
 
             return new UnsubscribeMessage(requestId, subscriptionId);
         }
+    }
+
+    @Override
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onUnsubscribe( this );
     }
 }

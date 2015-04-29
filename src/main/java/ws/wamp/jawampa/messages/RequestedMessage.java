@@ -1,6 +1,5 @@
 package ws.wamp.jawampa.messages;
 
-import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,14 +23,5 @@ public abstract class RequestedMessage extends WampMessage {
         messageNode.add(requestId);
         if (newResourceId != -1) messageNode.add(newResourceId);
         return messageNode;
-    }
-
-    @Override
-    public void onMessage( WampClient client ) {
-        if (newResourceId == -1) {
-            client.onSuccessfulReply( requestId, ID, null );
-        } else {
-            client.onSuccessfulReply( requestId, ID, newResourceId );
-        }
     }
 }

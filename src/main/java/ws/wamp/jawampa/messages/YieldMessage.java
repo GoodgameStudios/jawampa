@@ -3,6 +3,7 @@ package ws.wamp.jawampa.messages;
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.io.RequestId;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,5 +75,10 @@ public class YieldMessage extends WampMessage {
             return new YieldMessage(RequestId.of( requestId ), options, arguments,
                     argumentsKw);
         }
+    }
+
+    @Override
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onYield( this );
     }
 }

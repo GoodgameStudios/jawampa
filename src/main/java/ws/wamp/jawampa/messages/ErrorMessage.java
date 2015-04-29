@@ -1,9 +1,9 @@
 package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.io.RequestId;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -90,16 +90,11 @@ public class ErrorMessage extends WampMessage {
         }
     }
 
+
     @Override
-    public void onMessage( WampClient client ) {
-        if (requestType == CallMessage.ID
-                || requestType == SubscribeMessage.ID
-                || requestType == UnsubscribeMessage.ID
-                || requestType == PublishMessage.ID
-                || requestType == RegisterMessage.ID
-                || requestType == UnregisterMessage.ID) {
-            client.onErrorReply( requestId.getValue(), requestType, new ApplicationError(error, arguments, argumentsKw) );
-        }
+    public void onMessage( MessageHandler messageHandler ) {
+        // FIXME: Implement
+        throw new UnsupportedOperationException();
     }
 
     @Override

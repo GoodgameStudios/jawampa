@@ -2,6 +2,7 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
@@ -29,5 +30,10 @@ public class SubscribedMessage extends RequestedMessage {
 
             return new SubscribedMessage(requestId, subscriptionId);
         }
+    }
+
+    @Override
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onSubscribed( this );
     }
 }

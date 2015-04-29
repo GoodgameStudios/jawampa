@@ -1,10 +1,9 @@
 package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.Reply;
-import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.io.RequestId;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -79,7 +78,7 @@ public class ResultMessage extends WampMessage {
     }
 
     @Override
-    public void onMessage( WampClient client ) {
-        client.onSuccessfulReply( requestId.getValue(), CallMessage.ID, new Reply(arguments, argumentsKw) );
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onResult( this );
     }
 }

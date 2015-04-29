@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,15 +38,7 @@ public abstract class WampMessage {
         return factory.fromObjectArray(messageNode);
     }
 
-    public void onMessageBeforeWelcome( WampClient client ) {
-        logger.warn( "Received unexpected message before welcome message" + this );
-        client.onProtocolError();
-    }
-
-    public void onMessage( WampClient client ) {
-        logger.warn( "Received unknown message" + this );
-        client.onProtocolError();
-    }
+    public abstract void onMessage( MessageHandler messageHandler );
 
     // Register all possible message types
 
