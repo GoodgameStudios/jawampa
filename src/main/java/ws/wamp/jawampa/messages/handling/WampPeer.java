@@ -40,7 +40,7 @@ public class WampPeer implements MessageHandler {
     private final MessageHandler handshakingClient;
     private final MessageHandler handshakingRouter;
     
-    public WampPeer( MessageHandler broker, MessageHandler dealer,
+    WampPeer( MessageHandler broker, MessageHandler dealer,
                      MessageHandler caller, MessageHandler callee,
                      MessageHandler subscriber, MessageHandler publisher,
                      MessageHandler handshakingClient, MessageHandler handshakingRouter) {
