@@ -78,6 +78,7 @@ public class WampClientImpl implements WampClient, BaseClient {
 
     @Override
     public void close() {
+        // TODO: Be nicer
         connection.disconnect();
     }
 
@@ -158,5 +159,10 @@ public class WampClientImpl implements WampClient, BaseClient {
     @Override
     public Status connectionState() {
         return connection.getStatusObservable().getValue();
+    }
+
+    @Override
+    public void onProtocolError() {
+        connection.disconnect();
     }
 }

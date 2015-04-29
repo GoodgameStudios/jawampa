@@ -3,7 +3,6 @@ package ws.wamp.jawampa.roles;
 import java.util.List;
 import java.util.Set;
 
-import rx.Observable;
 import rx.subjects.BehaviorSubject;
 import ws.wamp.jawampa.WampClient.Status;
 import ws.wamp.jawampa.WampRoles;
@@ -11,6 +10,7 @@ import ws.wamp.jawampa.auth.client.ClientSideAuthentication;
 import ws.wamp.jawampa.ids.SessionId;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.messages.AbortMessage;
+import ws.wamp.jawampa.messages.AuthenticateMessage;
 import ws.wamp.jawampa.messages.ChallengeMessage;
 import ws.wamp.jawampa.messages.GoodbyeMessage;
 import ws.wamp.jawampa.messages.HelloMessage;
@@ -18,6 +18,7 @@ import ws.wamp.jawampa.messages.WelcomeMessage;
 import ws.wamp.jawampa.messages.handling.BaseMessageHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class ClientConnection extends BaseMessageHandler {
@@ -49,8 +50,18 @@ public class ClientConnection extends BaseMessageHandler {
 
     @Override
     public void onChallenge( ChallengeMessage msg ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        for ( ClientSideAuthentication authMethod : authMethods ) {
+            if (authMethod.authMethod().equals( msg.authMethod )) {
+                AuthenticateMessage reply = authMethod.handleChallenge( msg, mapper );
+                if ( reply == null ) {
+                    baseClient.onProtocolError();
+                } else {
+                    baseClient.scheduleMessageToRouter( reply );
+                }
+                return;
+            }
+        }
+        baseClient.onProtocolError();
     }
 
     @Override
@@ -78,6 +89,14 @@ public class ClientConnection extends BaseMessageHandler {
         for ( WampRoles role : roles ) {
             ObjectNode roleNode = rolesNode.putObject( role.toString() );
         }
+        if (authId != null) {
+            detailsNode.put( "authid", authId );
+        }
+        ArrayNode authMethodsNode = mapper.createArrayNode();
+        for( ClientSideAuthentication authMethod : authMethods ) {
+            authMethodsNode.add( authMethod.authMethod() );
+        }
+        detailsNode.set( "authmethods", authMethodsNode );
         baseClient.scheduleMessageToRouter( new HelloMessage( realm, detailsNode ) );
     }
 }
