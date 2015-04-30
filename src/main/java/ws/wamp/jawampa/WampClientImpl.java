@@ -21,6 +21,7 @@ import ws.wamp.jawampa.ids.SessionScopeIdGenerator;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.io.NettyConnection;
 import ws.wamp.jawampa.messages.WampMessage;
+import ws.wamp.jawampa.messages.handling.LoggingMessageHandler;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 import ws.wamp.jawampa.messages.handling.WampPeerBuilder;
 import ws.wamp.jawampa.roles.Callee;
@@ -63,11 +64,13 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
         callee = new Callee( this );
         clientConnection = new ClientConnection( this, realm, roles, authId, authMethods, mapper, this );
 
-        preWelcomeMessageHandler = new WampPeerBuilder().withHandshakingClient( clientConnection )
-                                                        .build();
+        preWelcomeMessageHandler = new LoggingMessageHandler(
+                new WampPeerBuilder().withHandshakingClient( clientConnection )
+                                     .build() );
 
-        postWelcomeMessageHandler = new WampPeerBuilder().withCallee( callee )
-                                                         .build();
+        postWelcomeMessageHandler = new LoggingMessageHandler(
+                new WampPeerBuilder().withCallee( callee )
+                                     .build() );
         connectionState = new Disconnected( this );
         externalStatusObservable = BehaviorSubject.create ( connectionState.getExternalConnectionStatus() );
 
