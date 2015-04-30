@@ -93,8 +93,31 @@ public class ErrorMessage extends WampMessage {
 
     @Override
     public void onMessage( MessageHandler messageHandler ) {
-        // FIXME: Implement
-        throw new UnsupportedOperationException();
+        switch ( requestType ) {
+        case SubscribeMessage.ID:
+            messageHandler.onSubscribeError( this );
+            break;
+        case UnsubscribeMessage.ID:
+            messageHandler.onUnsubscribeError( this );
+            break;
+        case PublishMessage.ID:
+            messageHandler.onPublishError( this );
+            break;
+        case RegisterMessage.ID:
+            messageHandler.onRegisterError( this );
+            break;
+        case UnregisterMessage.ID:
+            messageHandler.onUnregisterError( this );
+            break;
+        case InvocationMessage.ID:
+            messageHandler.onInvocationError( this );
+            break;
+        case CallMessage.ID:
+            messageHandler.onCallError( this );
+            break;
+        default:
+            messageHandler.onError( this );
+        }
     }
 
     @Override
