@@ -7,15 +7,17 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import rx.subjects.BehaviorSubject;
 import rx.subjects.PublishSubject;
-import ws.wamp.jawampa.WampClient.Status;
+import ws.wamp.jawampa.connectionStates.HasConnectionState;
 import ws.wamp.jawampa.messages.WampMessage;
 import ws.wamp.jawampa.transport.WampChannelEvents;
 import ws.wamp.jawampa.transport.WampClientChannelFactory;
@@ -23,10 +25,9 @@ import ws.wamp.jawampa.transport.WampClientChannelFactory;
 public class NettyConnection {
     private static final Logger log = LoggerFactory.getLogger( NettyConnection.class );
 
-    private final BehaviorSubject<Status> statusObservable = BehaviorSubject.create( Status.DISCONNECTED );
     private final PublishSubject<WampMessage> messageObservable = PublishSubject.create();
 
-    private final EventLoopGroup eventLoop;
+    private EventLoopGroup eventLoop;
     private volatile ChannelFuture connectFuture;
     private Channel channel;
 
@@ -34,8 +35,15 @@ public class NettyConnection {
 
     private MySessionHandler handler;
 
-    public NettyConnection( WampClientChannelFactory channelFactory ) {
-        this.eventLoop = new NioEventLoopGroup(1, new ThreadFactory() {
+    private final HasConnectionState stateHolder;
+
+    public NettyConnection( WampClientChannelFactory channelFactory, HasConnectionState stateHolder ) {
+        this.channelFactory = channelFactory;
+        this.stateHolder = stateHolder;
+    }
+
+    public void connect() {
+        eventLoop = new NioEventLoopGroup(1, new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
                 Thread t = new Thread(r, "WampClientEventLoop");
@@ -44,16 +52,6 @@ public class NettyConnection {
             }
         });
 
-        this.channelFactory = channelFactory;
-    }
-
-    public void connect() {
-        synchronized(statusObservable) {
-            if ( statusObservable.getValue() != Status.DISCONNECTED ) {
-                throw new IllegalStateException( "Cannot connect if not disconnected first!" );
-            }
-            statusObservable.onNext( Status.CONNECTING );
-        }
         eventLoop.execute(new Runnable() {
             @Override
             public void run() {
@@ -64,12 +62,12 @@ public class NettyConnection {
                         @Override
                         public void operationComplete(ChannelFuture f) throws Exception {
                             if (f.isSuccess()) {
+                                log.debug( "TCP Connection established!" );
                                 channel = f.channel();
                                 connectFuture = null;
                             } else {
-                                synchronized( statusObservable ) {
-                                    statusObservable.onNext( Status.DISCONNECTED );
-                                }
+                                log.warn( "Connection failed" );
+                                stateHolder.getInternalConnectionState().connectionFailed();
                             }
                         }
                     });
@@ -81,31 +79,27 @@ public class NettyConnection {
     }
 
     public void disconnect() {
-        synchronized( statusObservable ) {
-            if ( statusObservable.getValue() != Status.CONNECTED ) {
-                throw new IllegalStateException( "Cannot disconnect if not connected first!" );
-            }
-            statusObservable.onNext( Status.DISCONNECTED );
-        }
         channel.disconnect();
+        Future<Void> terminationFuture = (Future<Void>)eventLoop.shutdownGracefully();
+        terminationFuture.addListener( new GenericFutureListener<Future<Void>>() {
+            @Override
+            public void operationComplete( Future<Void> future ) throws Exception {
+                stateHolder.getInternalConnectionState().connectionTerminated();
+            }
+        } );
     }
 
     public void sendMessage( final WampMessage msg ) {
-        eventLoop.execute( new Runnable() {
-            @Override
-            public void run() {
-                log.debug( "Outgoing message: " + msg );
-                channel.writeAndFlush( msg );
-            }
-        });
-    }
-
-    public BehaviorSubject<Status> getStatusObservable() {
-        return statusObservable;
+        log.debug( "Outgoing message: " + msg );
+        channel.writeAndFlush( msg );
     }
 
     public PublishSubject<WampMessage> getMessageObservable() {
         return messageObservable;
+    }
+
+    public Executor executor() {
+        return eventLoop;
     }
 
     private class MySessionHandler extends SimpleChannelInboundHandler<WampMessage> {
@@ -118,9 +112,11 @@ public class NettyConnection {
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
             if (evt == WampChannelEvents.WEBSOCKET_CONN_ESTABLISHED) {
-                statusObservable.onNext( Status.SESSION_ESTABLISHING );
+                log.debug( "Handshake complete" );
+                stateHolder.getInternalConnectionState().connectionEstablished();
             } else if (evt == WampChannelEvents.WEBSOCKET_CLOSE_RECEIVED) {
-                statusObservable.onNext( Status.DISCONNECTED );
+                log.debug( "Connection terminated" );
+                stateHolder.getInternalConnectionState().connectionTerminated();
             }
         }
     }

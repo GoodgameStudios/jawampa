@@ -35,12 +35,8 @@ public interface WampClient {
     public static enum Status {
         /** The session is not connected */
         DISCONNECTED,
-        /** The session is trying to connect to the router */
-        CONNECTING,
-        /** Our underlying connection is established, now we are establishing the WAMP session */
-        SESSION_ESTABLISHING,
         /** The session is connected to the router */
-        CONNECTED
+        CONNECTED,
     }
 
     public enum PubSubState {
@@ -236,10 +232,4 @@ public interface WampClient {
      */
     public <T> Observable<T> call(final String procedure, 
                                   final Class<T> returnValueClass, Object... args);
-    
-    /**
-     * Returns a future that will be completed once the client terminates.<br>
-     * This can be used to wait for completion after {@link #close() close} was called.
-     */
-    public Future<Void> getTerminationFuture();
 }

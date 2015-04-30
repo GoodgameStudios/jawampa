@@ -3,10 +3,10 @@ package ws.wamp.jawampa.roles;
 import java.util.List;
 import java.util.Set;
 
-import rx.subjects.BehaviorSubject;
-import ws.wamp.jawampa.WampClient.Status;
+import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampRoles;
 import ws.wamp.jawampa.auth.client.ClientSideAuthentication;
+import ws.wamp.jawampa.connectionStates.HasConnectionState;
 import ws.wamp.jawampa.ids.SessionId;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.messages.AbortMessage;
@@ -28,7 +28,7 @@ public class ClientConnection extends BaseMessageHandler {
     private final String authId;
     private final List<ClientSideAuthentication> authMethods;
     private final ObjectMapper mapper;
-    private final BehaviorSubject<Status> statusObservable;
+    private final HasConnectionState stateHolder;
 
     private SessionId sessionId;
 
@@ -38,14 +38,14 @@ public class ClientConnection extends BaseMessageHandler {
                              String authId,
                              List<ClientSideAuthentication> authMethods,
                              ObjectMapper mapper,
-                             BehaviorSubject<Status> statusObservable ) {
+                             HasConnectionState stateHolder ) {
         this.baseClient = baseClient;
         this.realm = realm;
         this.roles = roles;
         this.authId = authId;
         this.authMethods = authMethods;
         this.mapper = mapper;
-        this.statusObservable = statusObservable;
+        this.stateHolder = stateHolder;
     }
 
     @Override
@@ -68,26 +68,24 @@ public class ClientConnection extends BaseMessageHandler {
     public void onWelcome( WelcomeMessage msg ) {
         // FIXME: Save stuff from welcome message
         sessionId = msg.sessionId;
-        statusObservable.onNext( Status.CONNECTED );
+        stateHolder.getInternalConnectionState().handshakeComplete();
     }
 
     @Override
     public void onAbort( AbortMessage msg ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        stateHolder.getInternalConnectionState().handshakeFailed();
     }
 
     @Override
     public void onGoodbye( GoodbyeMessage msg ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        stateHolder.getInternalConnectionState().goodbyeReceived();
     }
 
     public void sendHello() {
         ObjectNode detailsNode = mapper.createObjectNode();
         ObjectNode rolesNode = detailsNode.putObject("roles");
         for ( WampRoles role : roles ) {
-            ObjectNode roleNode = rolesNode.putObject( role.toString() );
+            rolesNode.putObject( role.toString() );
         }
         if (authId != null) {
             detailsNode.put( "authid", authId );
@@ -98,5 +96,13 @@ public class ClientConnection extends BaseMessageHandler {
         }
         detailsNode.set( "authmethods", authMethodsNode );
         baseClient.scheduleMessageToRouter( new HelloMessage( realm, detailsNode ) );
+    }
+
+    public void sendGoodbye( ) {
+        baseClient.scheduleMessageToRouter( new GoodbyeMessage( null, ApplicationError.SYSTEM_SHUTDOWN ) );
+    }
+
+    public void replyToGoodbye() {
+        baseClient.scheduleMessageToRouter( new GoodbyeMessage( null, ApplicationError.GOODBYE_AND_OUT ) );
     }
 }
