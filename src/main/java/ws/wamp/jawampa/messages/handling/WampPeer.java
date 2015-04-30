@@ -210,6 +210,7 @@ public class WampPeer implements MessageHandler {
         if ( broker != null ) broker.onError( msg );
         if ( dealer != null ) dealer.onError( msg );
         if ( callee != null ) callee.onError( msg );
+        if ( caller != null ) caller.onError( msg );
         if ( subscriber != null ) subscriber.onError( msg );
         if ( publisher != null ) publisher.onError( msg );
         if ( handshakingClient != null ) handshakingClient.onError( msg );
