@@ -42,7 +42,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class WampClientImpl implements WampClient, BaseClient, HasConnectionState {
     private static final Logger log = LoggerFactory.getLogger( WampClientImpl.class );
     private final NettyConnection connection;
-    private final MessageHandler messageHandler;
     private final ObjectMapper mapper = new ObjectMapper();
     private final SessionScopeIdGenerator sessionScopeIdGenerator = new SessionScopeIdGenerator();
 
@@ -52,6 +51,10 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     private final BehaviorSubject<Status> externalStatusObservable;
     private InternalConnectionState connectionState;
 
+    private final MessageHandler preWelcomeMessageHandler;
+    private final MessageHandler postWelcomeMessageHandler;
+    private MessageHandler messageHandler;
+
     public WampClientImpl( URI routerUri, String realm, Set<WampRoles> roles, boolean closeOnErrors, WampClientChannelFactory channelFactory,
             int nrReconnects, int reconnectInterval, String authId, List<ClientSideAuthentication> authMethods ) {
         // TODO Auto-generated constructor stub
@@ -60,9 +63,11 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
         callee = new Callee( this );
         clientConnection = new ClientConnection( this, realm, roles, authId, authMethods, mapper, this );
 
-        messageHandler = new WampPeerBuilder().withCallee( callee )
-                                              .withHandshakingClient( clientConnection )
-                                              .build();
+        preWelcomeMessageHandler = new WampPeerBuilder().withHandshakingClient( clientConnection )
+                                                        .build();
+
+        postWelcomeMessageHandler = new WampPeerBuilder().withCallee( callee )
+                                                         .build();
         connectionState = new Disconnected( this );
         externalStatusObservable = BehaviorSubject.create ( connectionState.getExternalConnectionStatus() );
 
@@ -207,5 +212,17 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
 
     public ClientConnection getClientConnection() {
         return clientConnection;
+    }
+
+    public MessageHandler getPreWelcomeMessageHandler() {
+        return preWelcomeMessageHandler;
+    }
+
+    public MessageHandler getPostWelcomeMessageHandler() {
+        return postWelcomeMessageHandler;
+    }
+
+    public void setMessageHandler( MessageHandler messageHandler ) {
+        this.messageHandler = messageHandler;
     }
 }

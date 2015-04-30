@@ -10,6 +10,7 @@ public class NettyConnecting extends BaseState {
 
     @Override
     public void connectionEstablished() {
+        impl.setMessageHandler( impl.getPreWelcomeMessageHandler() );
         impl.setInternalConnectionState( new WampHandshaking( impl ) );
         impl.getClientConnection().sendHello();
     }

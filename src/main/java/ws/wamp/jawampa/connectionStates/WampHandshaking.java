@@ -10,6 +10,7 @@ public class WampHandshaking extends BaseState {
 
     @Override
     public void handshakeComplete() {
+        impl.setMessageHandler( impl.getPostWelcomeMessageHandler() );
         impl.setInternalConnectionState( new Connected( impl ) );
     }
 
