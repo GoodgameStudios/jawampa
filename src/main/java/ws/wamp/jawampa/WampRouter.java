@@ -37,6 +37,7 @@ import java.util.concurrent.ThreadFactory;
 
 import rx.Scheduler;
 import rx.schedulers.Schedulers;
+import ws.wamp.jawampa.ids.PublicationId;
 import ws.wamp.jawampa.ids.RegistrationId;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.ids.SessionId;
@@ -668,7 +669,7 @@ public class WampRouter {
             }
             
             if (err != null) { // If we have an error send that to the client
-                ErrorMessage errMsg = new ErrorMessage(PublishMessage.ID, RequestId.of( pub.requestId ), 
+                ErrorMessage errMsg = new ErrorMessage(PublishMessage.ID, pub.requestId, 
                     null, err, null, null);
                 if (sendAcknowledge) {
                     handler.ctx.writeAndFlush(errMsg);
@@ -676,7 +677,7 @@ public class WampRouter {
                 return;
             }
             
-            long publicationId = IdGenerator.newRandomId(null); // Store that somewhere?
+            PublicationId publicationId = PublicationId.of( IdGenerator.newRandomId(null) ); // Store that somewhere?
 
             // Get the subscriptions for this topic on the realm
             Set<Subscription> subscriptionSet = handler.realm.subscriptions.get(pub.topic);
@@ -684,7 +685,7 @@ public class WampRouter {
                 for (Subscription subscriber : subscriptionSet) {
                     if (subscriber.subscriber == handler) continue; // Skip the publisher
                     // Publish the event to the subscriber
-                    EventMessage ev = new EventMessage(subscriber.subscriptionId, publicationId,
+                    EventMessage ev = new EventMessage(subscriber.subscriptionId, publicationId.getValue(),
                         null, pub.arguments, pub.argumentsKw);
                     subscriber.subscriber.ctx.writeAndFlush(ev);
                 }
