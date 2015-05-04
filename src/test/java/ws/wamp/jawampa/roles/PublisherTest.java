@@ -9,15 +9,20 @@ import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
+import ws.wamp.jawampa.ids.PublicationId;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.messages.PublishMessage;
+import ws.wamp.jawampa.messages.PublishedMessage;
 import ws.wamp.jawampa.messages.WampMessage;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class PublisherTest {
+    private final ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
     @Mock private BaseClient baseClient;
 
     private String topic = "some_topic";
@@ -31,7 +36,7 @@ public class PublisherTest {
 
     @Test
     public void testPublishSendsPublishMessage() {
-        Publisher subject = new Publisher( baseClient );
+        Publisher subject = new Publisher( baseClient, mapper );
 
         when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
 
@@ -42,6 +47,7 @@ public class PublisherTest {
             public boolean matches( Object argument ) {
                 PublishMessage message = (PublishMessage)argument;
                 if ( !message.requestId.equals( RequestId.of( 42L ) ) ) return false;
+                if ( !message.options.get( "acknowledge" ).asBoolean() ) return false;
                 if ( message.topic != topic ) return false;
                 if ( message.arguments != arguments ) return false;
                 if ( message.argumentsKw != kwArguments ) return false;
