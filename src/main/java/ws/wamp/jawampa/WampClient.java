@@ -16,11 +16,10 @@
 
 package ws.wamp.jawampa;
 
-import java.util.concurrent.Future;
-
 import rx.Observable;
 import ws.wamp.jawampa.roles.callee.RPCImplementation;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -87,18 +86,7 @@ public interface WampClient {
      * publication ID) and will then be completed or will be completed with
      * an error if the event could not be published.
      */
-    public Observable<Long> publish(final String topic, Object... args);
-    
-    /**
-     * Publishes an event under the given topic.
-     * @param topic The topic that should be used for publishing the event
-     * @param event The event to publish
-     * @return An observable that provides a notification whether the event
-     * publication was successful. This contains either a single value (the
-     * publication ID) and will then be completed or will be completed with
-     * an error if the event could not be published.
-     */
-    public Observable<Long> publish(final String topic, PubSubData event);
+    public Observable<Void> publish(final String topic, Object... args);
     
     /**
      * Publishes an event under the given topic.
@@ -111,7 +99,7 @@ public interface WampClient {
      * publication ID) and will then be completed or will be completed with
      * an error if the event could not be published.
      */
-    public Observable<Long> publish(final String topic, final ArrayNode arguments, 
+    public Observable<Void> publish(final String topic, final ArrayNode arguments, 
         final ObjectNode argumentsKw);
     
     /**
@@ -232,4 +220,11 @@ public interface WampClient {
      */
     public <T> Observable<T> call(final String procedure, 
                                   final Class<T> returnValueClass, Object... args);
+    
+    /**
+     * Returns the ObjectMapper used. If any methods of this API require an ArrayNode or
+     * an ObjectNode, use this mapper to create them!.
+     * @return the mapper
+     */
+    public ObjectMapper getMapper();
 }

@@ -3,7 +3,6 @@ package ws.wamp.jawampa;
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,11 +10,10 @@ import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.functions.Action1;
 import rx.subjects.BehaviorSubject;
-import ws.wamp.jawampa.WampClient.Status;
 import ws.wamp.jawampa.auth.client.ClientSideAuthentication;
-import ws.wamp.jawampa.connectionStates.InternalConnectionState;
 import ws.wamp.jawampa.connectionStates.Disconnected;
 import ws.wamp.jawampa.connectionStates.HasConnectionState;
+import ws.wamp.jawampa.connectionStates.InternalConnectionState;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.ids.SessionScopeIdGenerator;
 import ws.wamp.jawampa.io.BaseClient;
@@ -26,6 +24,7 @@ import ws.wamp.jawampa.messages.handling.MessageHandler;
 import ws.wamp.jawampa.messages.handling.WampPeerBuilder;
 import ws.wamp.jawampa.roles.Callee;
 import ws.wamp.jawampa.roles.ClientConnection;
+import ws.wamp.jawampa.roles.Publisher;
 import ws.wamp.jawampa.roles.callee.RPCImplementation;
 import ws.wamp.jawampa.transport.WampClientChannelFactory;
 
@@ -47,6 +46,7 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     private final SessionScopeIdGenerator sessionScopeIdGenerator = new SessionScopeIdGenerator();
 
     private final Callee callee;
+    private final Publisher publisher;
     private final ClientConnection clientConnection;
 
     private final BehaviorSubject<Status> externalStatusObservable;
@@ -62,6 +62,7 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
         connection = new NettyConnection( channelFactory, this );
 
         callee = new Callee( this );
+        publisher = new Publisher( this, mapper );
         clientConnection = new ClientConnection( this, realm, roles, authId, authMethods, mapper, this );
 
         preWelcomeMessageHandler = new LoggingMessageHandler(
@@ -70,6 +71,7 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
 
         postWelcomeMessageHandler = new LoggingMessageHandler(
                 new WampPeerBuilder().withCallee( callee )
+                                     .withPublisher( publisher )
                                      .build() );
         connectionState = new Disconnected( this );
         externalStatusObservable = BehaviorSubject.create ( connectionState.getExternalConnectionStatus() );
@@ -103,21 +105,13 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     }
 
     @Override
-    public Observable<Long> publish( String topic, Object... args ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    public Observable<Void> publish( String topic, Object... args ) {
+        return publish(topic, buildArgumentsArray(args), null);
     }
 
     @Override
-    public Observable<Long> publish( String topic, PubSubData event ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Observable<Long> publish( String topic, ArrayNode arguments, ObjectNode argumentsKw ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    public Observable<Void> publish( String topic, ArrayNode arguments, ObjectNode argumentsKw ) {
+        return publisher.publish( topic, arguments, argumentsKw );
     }
 
     @Override
@@ -191,10 +185,28 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
 
     /* ========================= end of BaseClient ============================ */
 
+    /**
+     * Builds an ArrayNode from all positional arguments in a WAMP message.<br>
+     * If there are no positional arguments then null will be returned, as
+     * WAMP requires no empty arguments list to be transmitted.
+     * @param args All positional arguments
+     * @return An ArrayNode containing positional arguments or null
+     */
+    private ArrayNode buildArgumentsArray(Object... args) {
+        if (args.length == 0) return null;
+        // Build the arguments array and serialize the arguments
+        final ArrayNode argArray = mapper.createArrayNode();
+        for (Object arg : args) {
+            argArray.addPOJO(arg);
+        }
+        return argArray;
+    }
+
     public NettyConnection getConnection() {
         return connection;
     }
 
+    @Override
     public ObjectMapper getMapper() {
         return mapper;
     }
