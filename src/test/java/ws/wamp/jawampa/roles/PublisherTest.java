@@ -1,5 +1,9 @@
 package ws.wamp.jawampa.roles;
+
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -9,9 +13,13 @@ import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
+import rx.Observable;
+import rx.Observer;
+import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.ids.PublicationId;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.io.BaseClient;
+import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.PublishMessage;
 import ws.wamp.jawampa.messages.PublishedMessage;
 import ws.wamp.jawampa.messages.WampMessage;
@@ -55,5 +63,44 @@ public class PublisherTest {
             }
         };
         verify( baseClient ).scheduleMessageToRouter( argThat( messageMatcher ) );
+    }
+
+    @Test
+    public void testNotificationOfClientOnSuccessfulPublication() {
+        Publisher subject = new Publisher( baseClient, mapper );
+
+        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
+
+        Observable<Void> obs = subject.publish( topic, arguments, kwArguments );
+        @SuppressWarnings( "unchecked" )
+        Observer<Void> observer = mock(Observer.class);
+        obs.subscribe( observer );
+
+        subject.onPublished( new PublishedMessage( RequestId.of( 42L ), PublicationId.of( 23L ) ) );
+
+        verify( observer ).onCompleted();
+        verify( observer, never() ).onError( any( Throwable.class ) );
+    }
+
+    @Test
+    public void testNotificationOfClientOnPublicationError() {
+        Publisher subject = new Publisher( baseClient, mapper );
+
+        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
+
+        Observable<Void> obs = subject.publish( topic, arguments, kwArguments );
+        @SuppressWarnings( "unchecked" )
+        Observer<Void> observer = mock(Observer.class);
+        obs.subscribe( observer );
+
+        subject.onPublishError( new ErrorMessage( PublishMessage.ID,
+                                                  RequestId.of( 42L ),
+                                                  null,
+                                                  ApplicationError.INVALID_ARGUMENT,
+                                                  null,
+                                                  null ) );
+
+        verify( observer, never() ).onCompleted();
+        verify( observer ).onError( any( ApplicationError.class ) );
     }
 }
