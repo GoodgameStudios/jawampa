@@ -13,8 +13,8 @@ import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
-import rx.Observable;
 import rx.Observer;
+import rx.subjects.AsyncSubject;
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.ids.PublicationId;
 import ws.wamp.jawampa.ids.RequestId;
@@ -45,10 +45,11 @@ public class PublisherTest {
     @Test
     public void testPublishSendsPublishMessage() {
         Publisher subject = new Publisher( baseClient, mapper );
+        AsyncSubject<Void> resultSubject = AsyncSubject.create();
 
         when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
 
-        subject.publish( topic, arguments, kwArguments );
+        subject.publish( topic, arguments, kwArguments, resultSubject );
 
         ArgumentMatcher<WampMessage> messageMatcher = new ArgumentMatcher<WampMessage>() {
             @Override
@@ -68,13 +69,14 @@ public class PublisherTest {
     @Test
     public void testNotificationOfClientOnSuccessfulPublication() {
         Publisher subject = new Publisher( baseClient, mapper );
+        AsyncSubject<Void> resultSubject = AsyncSubject.create();
 
         when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
 
-        Observable<Void> obs = subject.publish( topic, arguments, kwArguments );
+        subject.publish( topic, arguments, kwArguments, resultSubject );
         @SuppressWarnings( "unchecked" )
         Observer<Void> observer = mock(Observer.class);
-        obs.subscribe( observer );
+        resultSubject.subscribe( observer );
 
         subject.onPublished( new PublishedMessage( RequestId.of( 42L ), PublicationId.of( 23L ) ) );
 
@@ -85,13 +87,14 @@ public class PublisherTest {
     @Test
     public void testNotificationOfClientOnPublicationError() {
         Publisher subject = new Publisher( baseClient, mapper );
+        AsyncSubject<Void> resultSubject = AsyncSubject.create();
 
         when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
 
-        Observable<Void> obs = subject.publish( topic, arguments, kwArguments );
+        subject.publish( topic, arguments, kwArguments, resultSubject );
         @SuppressWarnings( "unchecked" )
         Observer<Void> observer = mock(Observer.class);
-        obs.subscribe( observer );
+        resultSubject.subscribe( observer );
 
         subject.onPublishError( new ErrorMessage( PublishMessage.ID,
                                                   RequestId.of( 42L ),

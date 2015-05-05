@@ -28,9 +28,8 @@ public class Publisher extends BaseMessageHandler {
         this.mapper = mapper;
     }
 
-    public Observable<Void> publish( final String topic, final ArrayNode arguments, final ObjectNode argumentsKw ) {
+    public void publish( final String topic, final ArrayNode arguments, final ObjectNode argumentsKw, AsyncSubject<Void> resultSubject ) {
         RequestId requestId = baseClient.getNewRequestId();
-        AsyncSubject<Void> resultSubject = AsyncSubject.create();
         requestId2AsyncSubject.put( requestId, resultSubject );
 
         baseClient.scheduleMessageToRouter( new PublishMessage( requestId,
@@ -38,7 +37,6 @@ public class Publisher extends BaseMessageHandler {
                                                                 topic,
                                                                 arguments,
                                                                 argumentsKw ) );
-        return resultSubject;
     }
 
     @Override

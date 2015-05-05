@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import rx.Observable;
 import rx.functions.Action1;
+import rx.subjects.AsyncSubject;
 import rx.subjects.BehaviorSubject;
 import ws.wamp.jawampa.auth.client.ClientSideAuthentication;
 import ws.wamp.jawampa.connectionStates.Disconnected;
@@ -110,8 +111,17 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     }
 
     @Override
-    public Observable<Void> publish( String topic, ArrayNode arguments, ObjectNode argumentsKw ) {
-        return publisher.publish( topic, arguments, argumentsKw );
+    public Observable<Void> publish( final String topic, final ArrayNode arguments, final ObjectNode argumentsKw ) {
+        final AsyncSubject<Void> resultSubject = AsyncSubject.create();
+
+        connection.executor().execute( new Runnable() {
+            @Override
+            public void run() {
+                publisher.publish( topic, arguments, argumentsKw, resultSubject );
+            }
+        });
+
+        return resultSubject;
     }
 
     @Override
