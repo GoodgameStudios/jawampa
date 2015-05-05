@@ -20,14 +20,13 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class PubSubData {
-    
-    final ArrayNode arguments;
-    final ObjectNode keywordArguments;
-    
+    private final ArrayNode arguments;
+    private final ObjectNode keywordArguments;
+
     public ArrayNode arguments() {
         return arguments;
     }
-    
+
     public ObjectNode keywordArguments() {
         return keywordArguments;
     }
