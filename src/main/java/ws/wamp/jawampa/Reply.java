@@ -20,9 +20,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Reply {
-    
-    final ArrayNode arguments;
-    final ObjectNode keywordArguments;
+    private final ArrayNode arguments;
+    private final ObjectNode keywordArguments;
     
     public ArrayNode arguments() {
         return arguments;
@@ -36,5 +35,4 @@ public class Reply {
         this.arguments = arguments;
         this.keywordArguments = keywordArguments;
     }
-
 }
