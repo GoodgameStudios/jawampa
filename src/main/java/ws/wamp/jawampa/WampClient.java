@@ -173,54 +173,7 @@ public interface WampClient {
     public Observable<Reply> call(final String procedure,
                                   final ArrayNode arguments,
                                   final ObjectNode argumentsKw);
-    
-    /**
-     * Performs a remote procedure call through the router.<br>
-     * The function will return immediately, as the actual call will happen
-     * asynchronously.
-     * @param procedure The name of the procedure to call. Must be a valid WAMP
-     * Uri.
-     * @param args The list of positional arguments for the remote procedure call.
-     * These will be get serialized according to the Jackson library serializing
-     * behavior.
-     * @return An observable that provides a notification whether the call was
-     * was successful and the return value. If the call is successful the
-     * returned observable will be completed with a single value (the return value).
-     * If the remote procedure call yields an error the observable will be completed
-     * with an error.
-     */
-    public Observable<Reply> call(final String procedure, Object... args);
-    
-    /**
-     * Performs a remote procedure call through the router.<br>
-     * The function will return immediately, as the actual call will happen
-     * asynchronously.<br>
-     * This overload of the call function will automatically map the received
-     * reply value into the specified Java type by using Jacksons object mapping
-     * facilities.<br>
-     * Only the first value in the array of positional arguments will be taken
-     * into account for the transformation. If multiple return values are required
-     * another overload of this function has to be used.<br>
-     * If the expected return type is not {@link Void} but the return value array
-     * contains no value or if the value in the array can not be deserialized into
-     * the expected type the returned {@link Observable} will be completed with
-     * an error.
-     * @param procedure The name of the procedure to call. Must be a valid WAMP
-     * Uri.
-     * @param returnValueClass The class of the expected return value. If the function
-     * uses no return values Void should be used.
-     * @param args The list of positional arguments for the remote procedure call.
-     * These will be get serialized according to the Jackson library serializing
-     * behavior.
-     * @return An observable that provides a notification whether the call was
-     * was successful and the return value. If the call is successful the
-     * returned observable will be completed with a single value (the return value).
-     * If the remote procedure call yields an error the observable will be completed
-     * with an error.
-     */
-    public <T> Observable<T> call(final String procedure, 
-                                  final Class<T> returnValueClass, Object... args);
-    
+
     /**
      * Returns the ObjectMapper used. If any methods of this API require an ArrayNode or
      * an ObjectNode, use this mapper to create them!.

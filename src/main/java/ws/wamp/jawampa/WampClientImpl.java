@@ -24,6 +24,7 @@ import ws.wamp.jawampa.messages.handling.LoggingMessageHandler;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 import ws.wamp.jawampa.messages.handling.WampPeerBuilder;
 import ws.wamp.jawampa.roles.Callee;
+import ws.wamp.jawampa.roles.Caller;
 import ws.wamp.jawampa.roles.ClientConnection;
 import ws.wamp.jawampa.roles.Publisher;
 import ws.wamp.jawampa.roles.callee.RPCImplementation;
@@ -48,6 +49,7 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
 
     private final Callee callee;
     private final Publisher publisher;
+    private final Caller caller;
     private final ClientConnection clientConnection;
 
     private final BehaviorSubject<Status> externalStatusObservable;
@@ -64,6 +66,7 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
 
         callee = new Callee( this );
         publisher = new Publisher( this, mapper );
+        caller = new Caller( this );
         clientConnection = new ClientConnection( this, realm, roles, authId, authMethods, mapper, this );
 
         preWelcomeMessageHandler = new LoggingMessageHandler(
@@ -73,6 +76,7 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
         postWelcomeMessageHandler = new LoggingMessageHandler(
                 new WampPeerBuilder().withCallee( callee )
                                      .withPublisher( publisher )
+                                     .withCaller( caller )
                                      .build() );
         connectionState = new Disconnected( this );
         externalStatusObservable = BehaviorSubject.create ( connectionState.getExternalConnectionStatus() );
@@ -147,21 +151,17 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     }
 
     @Override
-    public Observable<Reply> call( String procedure, ArrayNode arguments, ObjectNode argumentsKw ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
+    public Observable<Reply> call( final String procedure, final ArrayNode arguments, final ObjectNode argumentsKw ) {
+        final AsyncSubject<Reply> resultSubject = AsyncSubject.create();
 
-    @Override
-    public Observable<Reply> call( String procedure, Object... args ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
+        connection.executor().execute( new Runnable() {
+            @Override
+            public void run() {
+                caller.call( procedure, arguments, argumentsKw, resultSubject );
+            }
+        });
 
-    @Override
-    public <T> Observable<T> call( String procedure, Class<T> returnValueClass, Object... args ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return resultSubject;
     }
 
     @Override
