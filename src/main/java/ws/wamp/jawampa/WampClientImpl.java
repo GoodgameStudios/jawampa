@@ -165,6 +165,15 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     }
 
     @Override
+    public ObjectMapper getMapper() {
+        return mapper;
+    }
+
+    /* ========================= end of WampClient public interface ============================ */
+
+    /* ========================= begin BaseClient ============================ */
+
+    @Override
     public void scheduleMessageToRouter( final WampMessage message ) {
         connection.executor().execute( new Runnable() {
             @Override
@@ -173,10 +182,6 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
             }
         });
     }
-
-    /* ========================= end of WampClient public interface ============================ */
-
-    /* ========================= begin BaseClient ============================ */
 
     @Override
     public RequestId getNewRequestId() {
@@ -214,11 +219,6 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
 
     public NettyConnection getConnection() {
         return connection;
-    }
-
-    @Override
-    public ObjectMapper getMapper() {
-        return mapper;
     }
 
     @Override
