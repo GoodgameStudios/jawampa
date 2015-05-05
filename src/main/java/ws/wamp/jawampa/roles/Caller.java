@@ -1,53 +1,46 @@
 package ws.wamp.jawampa.roles;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import rx.subjects.AsyncSubject;
-import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.Reply;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.messages.CallMessage;
 import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.ResultMessage;
+import ws.wamp.jawampa.messages.WampMessage;
 import ws.wamp.jawampa.messages.handling.BaseMessageHandler;
+import ws.wamp.jawampa.roles.RequestTracker.MessageFactory;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Caller extends BaseMessageHandler {
-    private final BaseClient baseClient;
-
-    private final Map<RequestId, AsyncSubject<Reply>> requestId2AsyncSubject = new HashMap<RequestId, AsyncSubject<Reply>>();
+    private final RequestTracker<Reply> requestTracker;
 
     public Caller( BaseClient baseClient ) {
-        this.baseClient = baseClient;
+        this.requestTracker = new RequestTracker<Reply>( baseClient );
     }
 
-    public void call( String procedure, ArrayNode arguments, ObjectNode kwArguments, AsyncSubject<Reply> resultSubject ) {
-        RequestId requestId = baseClient.getNewRequestId();
-        requestId2AsyncSubject.put( requestId, resultSubject );
-
-        baseClient.scheduleMessageToRouter( new CallMessage( requestId,
-                                                             null,
-                                                             procedure,
-                                                             arguments,
-                                                             kwArguments ) );
+    public void call( final String procedure, final ArrayNode arguments, final ObjectNode kwArguments, AsyncSubject<Reply> resultSubject ) {
+        requestTracker.sendRequest( resultSubject, new MessageFactory() {
+            @Override
+            public WampMessage fromRequestId( RequestId requestId ) {
+                return new CallMessage( requestId,
+                                        null,
+                                        procedure,
+                                        arguments,
+                                        kwArguments );
+            }
+        });
     }
 
     @Override
     public void onResult( ResultMessage msg ) {
-        RequestId requestId = msg.requestId;
-        requestId2AsyncSubject.get( requestId ).onNext( new Reply( msg.arguments, msg.argumentsKw ) );
-        requestId2AsyncSubject.get( requestId ).onCompleted();
-        requestId2AsyncSubject.remove( requestId );
+        requestTracker.onSuccess( msg.requestId, new Reply( msg.arguments, msg.argumentsKw ) );
     }
 
     @Override
     public void onCallError( ErrorMessage msg ) {
-        RequestId requestId = msg.requestId;
-        requestId2AsyncSubject.get( requestId ).onError( new ApplicationError( msg.error, msg.arguments, msg.argumentsKw ) );
-        requestId2AsyncSubject.remove( requestId );
+        requestTracker.onError( msg );
     }
 }
