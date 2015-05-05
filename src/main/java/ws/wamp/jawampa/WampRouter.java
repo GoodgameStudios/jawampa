@@ -41,6 +41,7 @@ import ws.wamp.jawampa.ids.PublicationId;
 import ws.wamp.jawampa.ids.RegistrationId;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.ids.SessionId;
+import ws.wamp.jawampa.ids.SubscriptionId;
 import ws.wamp.jawampa.internal.IdGenerator;
 import ws.wamp.jawampa.internal.IdValidator;
 import ws.wamp.jawampa.internal.RealmConfig;
@@ -574,7 +575,7 @@ public class WampRouter {
             }
             
             if (err != null) { // If we have an error send that to the client
-                ErrorMessage errMsg = new ErrorMessage(SubscribeMessage.ID, RequestId.of( sub.requestId ), 
+                ErrorMessage errMsg = new ErrorMessage(SubscribeMessage.ID, sub.requestId, 
                     null, err, null, null);
                 handler.ctx.writeAndFlush(errMsg);
                 return;
@@ -600,7 +601,7 @@ public class WampRouter {
             }
             handler.subscriptions.put(subscriptionId, s);
             
-            SubscribedMessage response = new SubscribedMessage(sub.requestId, subscriptionId);
+            SubscribedMessage response = new SubscribedMessage(sub.requestId, SubscriptionId.of( subscriptionId ) );
             handler.ctx.writeAndFlush(response);
         } else if (msg instanceof UnsubscribeMessage) {
             // The client wants to cancel a subscription
@@ -625,7 +626,7 @@ public class WampRouter {
             }
             
             if (err != null) { // If we have an error send that to the client
-                ErrorMessage errMsg = new ErrorMessage(UnsubscribeMessage.ID, RequestId.of( unsub.requestId ), 
+                ErrorMessage errMsg = new ErrorMessage(UnsubscribeMessage.ID, unsub.requestId, 
                     null, err, null, null);
                 handler.ctx.writeAndFlush(errMsg);
                 return;

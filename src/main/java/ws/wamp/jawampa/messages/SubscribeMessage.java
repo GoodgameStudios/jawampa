@@ -2,6 +2,7 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,11 +16,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public class SubscribeMessage extends WampMessage {
     public final static int ID = 32;
-    public final long requestId;
+    public final RequestId requestId;
     public final ObjectNode options;
     public final String topic;
 
-    public SubscribeMessage(long requestId, ObjectNode options, String topic) {
+    public SubscribeMessage(RequestId requestId, ObjectNode options, String topic) {
         this.requestId = requestId;
         this.options = options;
         this.topic = topic;
@@ -28,7 +29,7 @@ public class SubscribeMessage extends WampMessage {
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
         messageNode.add(ID);
-        messageNode.add(requestId);
+        messageNode.add(requestId.getValue());
         if (options != null)
             messageNode.add(options);
         else
@@ -46,7 +47,7 @@ public class SubscribeMessage extends WampMessage {
                     || !messageNode.get(3).isTextual())
                 throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-            long requestId = messageNode.get(1).asLong();
+            RequestId requestId = RequestId.of( messageNode.get(1).asLong() );
             ObjectNode options = (ObjectNode) messageNode.get(2);
             String topic = messageNode.get(3).asText();
 

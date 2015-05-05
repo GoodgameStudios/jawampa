@@ -2,6 +2,8 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.ids.RequestId;
+import ws.wamp.jawampa.ids.SubscriptionId;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,10 +16,10 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
  */
 public class UnsubscribeMessage extends WampMessage {
     public final static int ID = 34;
-    public final long requestId;
-    public final long subscriptionId;
+    public final RequestId requestId;
+    public final SubscriptionId subscriptionId;
 
-    public UnsubscribeMessage(long requestId, long subsriptionId) {
+    public UnsubscribeMessage(RequestId requestId, SubscriptionId subsriptionId) {
         this.requestId = requestId;
         this.subscriptionId = subsriptionId;
     }
@@ -25,8 +27,8 @@ public class UnsubscribeMessage extends WampMessage {
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
         messageNode.add(ID);
-        messageNode.add(requestId);
-        messageNode.add(subscriptionId);
+        messageNode.add(requestId.getValue());
+        messageNode.add(subscriptionId.getValue());
         return messageNode;
     }
 
@@ -38,8 +40,8 @@ public class UnsubscribeMessage extends WampMessage {
                     || !messageNode.get(2).canConvertToLong())
                 throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-            long requestId = messageNode.get(1).asLong();
-            long subscriptionId = messageNode.get(2).asLong();
+            RequestId requestId = RequestId.of( messageNode.get(1).asLong() );
+            SubscriptionId subscriptionId = SubscriptionId.of( messageNode.get(2).asLong() );
 
             return new UnsubscribeMessage(requestId, subscriptionId);
         }

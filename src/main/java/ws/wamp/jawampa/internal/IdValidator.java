@@ -16,6 +16,7 @@
 
 package ws.wamp.jawampa.internal;
 
+import ws.wamp.jawampa.ids.BaseId;
 import ws.wamp.jawampa.ids.RegistrationId;
 import ws.wamp.jawampa.ids.RequestId;
 
@@ -38,11 +39,7 @@ public class IdValidator {
         return false;
     }
 
-    public static boolean isValidId(RequestId id) {
-        return isValidId(id.getValue());
-    }
-
-    public static boolean isValidId(RegistrationId id) {
+    public static boolean isValidId(BaseId id) {
         return isValidId(id.getValue());
     }
 }
