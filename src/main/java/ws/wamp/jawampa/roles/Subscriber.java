@@ -55,8 +55,7 @@ public class Subscriber extends BaseMessageHandler {
 
     @Override
     public void onSubscribeError( ErrorMessage msg ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        registrationTracker.onError( msg );
     }
 
     @Override
