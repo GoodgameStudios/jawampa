@@ -169,4 +169,16 @@ public class SubscriberTest {
         verify( unsubscriptionObserver, never() ).onCompleted();
         verify( unsubscriptionObserver ).onError( any( ApplicationError.class ) );
     }
+
+    @Test
+    public void testEventAfterUnsubscribeIsAnError() {
+        subject.subscribe( topic, resultSubject );
+        subject.onSubscribed( new SubscribedMessage( REQUEST_ID, SUBSCRIPTION_ID ) );
+        subject.unsubscribe( topic, unsubscribeSubject );
+        subject.onUnsubscribed( new UnsubscribedMessage( UN_REQUEST_ID ) );
+
+        subject.onEvent( new EventMessage( SUBSCRIPTION_ID, PUBLICATION_ID, null, arguments, kwArguments ) );
+
+        verify( baseClient ).onProtocolError();
+    }
 }
