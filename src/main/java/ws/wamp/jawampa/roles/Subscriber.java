@@ -99,9 +99,14 @@ public class Subscriber extends BaseMessageHandler {
 
             @Override
             public void onCompleted() {
-                subscriptionId2publishSubject.remove( topic2subscriptionId.get( topic ) );
+                SubscriptionId subscriptionId = topic2subscriptionId.get( topic );
+                PublishSubject<PubSubData> publishSubject = subscriptionId2publishSubject.get( subscriptionId );
+
+                subscriptionId2publishSubject.remove( subscriptionId );
                 topic2subscriptionId.remove( topic );
+
                 resultSubject.onCompleted();
+                publishSubject.onCompleted();
             }
 
             @Override

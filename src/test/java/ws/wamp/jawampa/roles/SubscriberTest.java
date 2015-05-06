@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
@@ -180,5 +179,16 @@ public class SubscriberTest {
         subject.onEvent( new EventMessage( SUBSCRIPTION_ID, PUBLICATION_ID, null, arguments, kwArguments ) );
 
         verify( baseClient ).onProtocolError();
+    }
+
+    @Test
+    public void testRegistrationSubjectIsCompletedWhenUnsubscribeIsSuccessful() {
+        subject.subscribe( topic, resultSubject );
+        subject.onSubscribed( new SubscribedMessage( REQUEST_ID, SUBSCRIPTION_ID ) );
+        subject.unsubscribe( topic, unsubscribeSubject );
+        subject.onUnsubscribed( new UnsubscribedMessage( UN_REQUEST_ID ) );
+
+        verify( publicationObserver ).onCompleted();
+        verify( publicationObserver, never()).onError( any( Throwable.class ) );
     }
 }
