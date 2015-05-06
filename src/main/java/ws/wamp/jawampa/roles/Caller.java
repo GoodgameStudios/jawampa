@@ -18,9 +18,7 @@ public class Caller extends BaseMessageHandler {
     private final RequestTracker<Reply> requestTracker;
 
     public Caller( BaseClient baseClient ) {
-        this.requestTracker = new RequestTracker.Builder<Reply>( baseClient )
-                                                .completeAsyncOnSuccess()
-                                                .build();
+        this.requestTracker = new RequestTracker<Reply>( baseClient );
     }
 
     public void call( final String procedure, final ArrayNode arguments, final ObjectNode kwArguments, PublishSubject<Reply> resultSubject ) {

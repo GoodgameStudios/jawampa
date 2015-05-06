@@ -31,8 +31,8 @@ public class Subscriber extends BaseMessageHandler {
     public Subscriber( BaseClient baseClient ) {
         this.baseClient = baseClient;
 
-        registrationTracker = new RequestTracker.Builder<SubscriptionId>( baseClient ).completeAsyncOnSuccess().build();
-        unregistrationTracker = new RequestTracker.Builder<Void>( baseClient ).completeAsyncOnSuccess().build();
+        registrationTracker = new RequestTracker<SubscriptionId>( baseClient );
+        unregistrationTracker = new RequestTracker<Void>( baseClient );
 
         subscriptionId2publishSubject = new HashMap<SubscriptionId, PublishSubject<PubSubData>>();
         topic2subscriptionId = new HashMap<String, SubscriptionId>();

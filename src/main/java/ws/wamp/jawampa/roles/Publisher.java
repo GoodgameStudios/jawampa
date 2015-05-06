@@ -20,9 +20,7 @@ public class Publisher extends BaseMessageHandler {
 
     public Publisher( BaseClient baseClient, ObjectMapper mapper ) {
         this.mapper = mapper;
-        this.requestTracker = new RequestTracker.Builder<Void>( baseClient )
-                                                .completeAsyncOnSuccess()
-                                                .build();
+        this.requestTracker = new RequestTracker<Void>( baseClient );
     }
 
     public void publish( final String topic, final ArrayNode arguments, final ObjectNode argumentsKw, PublishSubject<Void> resultSubject ) {
