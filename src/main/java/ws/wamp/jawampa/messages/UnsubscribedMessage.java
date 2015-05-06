@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 public class UnsubscribedMessage extends WampMessage {
     public final static int ID = 35;
 
-    private final RequestId requestId;
+    public final RequestId requestId;
 
     public UnsubscribedMessage(RequestId requestId) {
         this.requestId = requestId;
