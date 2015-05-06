@@ -15,7 +15,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * Format: [WELCOME, Session|id, Details|dict]
  */
 public class WelcomeMessage extends WampMessage {
-    public final static int ID = 2;
+    public static final MessageCode ID = MessageCode.WELCOME;
+
     public final SessionId sessionId;
     public final ObjectNode details;
 
@@ -26,7 +27,7 @@ public class WelcomeMessage extends WampMessage {
 
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
+        messageNode.add( ID.getValue() );
         messageNode.add(sessionId.getValue());
         if (details != null)
             messageNode.add(details);

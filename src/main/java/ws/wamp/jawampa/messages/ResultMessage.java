@@ -17,7 +17,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
  */
 public class ResultMessage extends WampMessage {
-    public final static int ID = 50;
+    public static final MessageCode ID = MessageCode.RESULT;
+
     public final RequestId requestId;
     public final ObjectNode details;
     public final ArrayNode arguments;
@@ -33,7 +34,7 @@ public class ResultMessage extends WampMessage {
 
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
+        messageNode.add( ID.getValue() );
         messageNode.add(requestId.getValue());
         if (details != null)
             messageNode.add(details);

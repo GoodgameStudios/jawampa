@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
  * unsubscription. [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
  */
 public class UnsubscribedMessage extends WampMessage {
-    public final static int ID = 35;
+    public static final MessageCode ID = MessageCode.UNSUBSCRIBED;
 
     public final RequestId requestId;
 
@@ -24,7 +24,7 @@ public class UnsubscribedMessage extends WampMessage {
 
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
+        messageNode.add( ID.getValue() );
         messageNode.add(requestId.getValue());
         return messageNode;
     }

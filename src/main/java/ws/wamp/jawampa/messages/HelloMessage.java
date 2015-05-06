@@ -14,7 +14,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * attaching to a Realm. Format: [HELLO, Realm|uri, Details|dict]
  */
 public class HelloMessage extends WampMessage {
-    public final static int ID = 1;
+    public static final MessageCode ID = MessageCode.HELLO;
+
     public final String realm;
     public final ObjectNode details;
 
@@ -25,7 +26,7 @@ public class HelloMessage extends WampMessage {
 
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
+        messageNode.add( ID.getValue() );
         messageNode.add(realm.toString());
         if (details != null)
             messageNode.add(details);

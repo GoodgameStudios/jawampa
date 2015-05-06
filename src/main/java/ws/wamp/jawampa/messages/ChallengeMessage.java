@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class ChallengeMessage extends WampMessage {
-    public final static int ID = 4;
+    public static final MessageCode ID = MessageCode.CHALLENGE;
 
     public final String authMethod;
     public final ObjectNode extra;
@@ -23,7 +23,7 @@ public class ChallengeMessage extends WampMessage {
     @Override
     public JsonNode toObjectArray( ObjectMapper mapper ) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
+        messageNode.add( ID.getValue() );
         messageNode.add(authMethod);
         messageNode.add(extra);
         return messageNode;

@@ -16,7 +16,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
  * 
  */
 public class UnregisterMessage extends WampMessage {
-    public final static int ID = 66;
+    public static final MessageCode ID = MessageCode.UNREGISTER;
+
     public final RequestId requestId;
     public final RegistrationId registrationId;
 
@@ -27,7 +28,7 @@ public class UnregisterMessage extends WampMessage {
 
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
+        messageNode.add( ID.getValue() );
         messageNode.add(requestId.getValue());
         messageNode.add(registrationId.getValue());
         return messageNode;

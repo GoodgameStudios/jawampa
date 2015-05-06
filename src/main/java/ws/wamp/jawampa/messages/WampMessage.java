@@ -46,9 +46,9 @@ public abstract class WampMessage {
      * A map which associates all message types which factories which can
      * recreate them from received data.
      */
-    final static Map<Integer, WampMessageFactory> messageFactories;
+    final static Map<MessageCode, WampMessageFactory> messageFactories;
     static {
-        HashMap<Integer, WampMessageFactory> map = new HashMap<Integer, WampMessageFactory>();
+        HashMap<MessageCode, WampMessageFactory> map = new HashMap<MessageCode, WampMessageFactory>();
         map.put(HelloMessage.ID, new HelloMessage.Factory());
         map.put(WelcomeMessage.ID, new WelcomeMessage.Factory());
         map.put(AbortMessage.ID, new AbortMessage.Factory());

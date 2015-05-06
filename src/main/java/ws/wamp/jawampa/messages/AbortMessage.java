@@ -14,7 +14,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * expected. [ABORT, Details|dict, Reason|uri]
  */
 public class AbortMessage extends WampMessage {
-    public final static int ID = 3;
+    public static final MessageCode ID = MessageCode.ABORT;
+
     public final ObjectNode details;
     public final String reason;
 
@@ -25,7 +26,7 @@ public class AbortMessage extends WampMessage {
 
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
+        messageNode.add( ID.getValue() );
         if (details != null)
             messageNode.add(details);
         else

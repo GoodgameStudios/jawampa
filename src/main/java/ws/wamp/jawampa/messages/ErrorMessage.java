@@ -19,15 +19,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * ArgumentsKw|dict]
  */
 public class ErrorMessage extends WampMessage {
-    public final static int ID = 8;
-    public final int requestType;
+    public static final MessageCode ID = MessageCode.ERROR;
+
+    public final MessageCode requestType;
     public final RequestId requestId;
     public final ObjectNode details;
     public final String error;
     public final ArrayNode arguments;
     public final ObjectNode argumentsKw;
 
-    public ErrorMessage(int requestType, RequestId requestId,
+    public ErrorMessage(MessageCode requestType, RequestId requestId,
             ObjectNode details, String error, ArrayNode arguments,
             ObjectNode argumentsKw) {
         this.requestType = requestType;
@@ -40,8 +41,8 @@ public class ErrorMessage extends WampMessage {
 
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
-        messageNode.add(requestType);
+        messageNode.add( ID.getValue() );
+        messageNode.add( requestType.getValue() );
         messageNode.add(requestId.getValue());
         if (details != null)
             messageNode.add(details);
@@ -67,8 +68,8 @@ public class ErrorMessage extends WampMessage {
                     || !messageNode.get(4).isTextual())
                 throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-            int requestType = messageNode.get(1).asInt();
-            long requestId = messageNode.get(2).asLong();
+            MessageCode requestType = MessageCode.of( messageNode.get(1).asInt() );
+            RequestId requestId = RequestId.of( messageNode.get(2).asLong() );
             ObjectNode details = (ObjectNode) messageNode.get(3);
             String error = messageNode.get(4).asText();
             ArrayNode arguments = null;
@@ -85,7 +86,7 @@ public class ErrorMessage extends WampMessage {
                 }
             }
 
-            return new ErrorMessage(requestType, RequestId.of( requestId ), details, error,
+            return new ErrorMessage(requestType, requestId, details, error,
                     arguments, argumentsKw);
         }
     }
@@ -94,25 +95,25 @@ public class ErrorMessage extends WampMessage {
     @Override
     public void onMessage( MessageHandler messageHandler ) {
         switch ( requestType ) {
-        case SubscribeMessage.ID:
+        case SUBSCRIBE:
             messageHandler.onSubscribeError( this );
             break;
-        case UnsubscribeMessage.ID:
+        case UNSUBSCRIBE:
             messageHandler.onUnsubscribeError( this );
             break;
-        case PublishMessage.ID:
+        case PUBLISH:
             messageHandler.onPublishError( this );
             break;
-        case RegisterMessage.ID:
+        case REGISTER:
             messageHandler.onRegisterError( this );
             break;
-        case UnregisterMessage.ID:
+        case UNREGISTER:
             messageHandler.onUnregisterError( this );
             break;
-        case InvocationMessage.ID:
+        case INVOCATION:
             messageHandler.onInvocationError( this );
             break;
-        case CallMessage.ID:
+        case CALL:
             messageHandler.onCallError( this );
             break;
         default:
@@ -129,7 +130,7 @@ public class ErrorMessage extends WampMessage {
         result = prime * result + ( ( details == null ) ? 0 : details.hashCode() );
         result = prime * result + ( ( error == null ) ? 0 : error.hashCode() );
         result = prime * result + ( ( requestId == null ) ? 0 : requestId.hashCode() );
-        result = prime * result + requestType;
+        result = prime * result + ( ( requestType == null ) ? 0 : requestType.hashCode() );
         return result;
     }
 

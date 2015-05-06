@@ -14,7 +14,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * by the receiving Peer. Format: [GOODBYE, Details|dict, Reason|uri]
  */
 public class GoodbyeMessage extends WampMessage {
-    public final static int ID = 6;
+    public static final MessageCode ID = MessageCode.GOODBYE;
+
     public final ObjectNode details;
     public final String reason;
 
@@ -25,7 +26,7 @@ public class GoodbyeMessage extends WampMessage {
 
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
+        messageNode.add( ID.getValue() );
         if (details != null)
             messageNode.add(details);
         else
