@@ -1,36 +1,29 @@
 package ws.wamp.jawampa.roles;
 
-import static org.junit.Assert.*;
 import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import rx.Observer;
 import rx.subjects.PublishSubject;
 import ws.wamp.jawampa.PubSubData;
-import ws.wamp.jawampa.Reply;
 import ws.wamp.jawampa.ids.PublicationId;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.ids.SubscriptionId;
 import ws.wamp.jawampa.io.BaseClient;
-import ws.wamp.jawampa.messages.CallMessage;
 import ws.wamp.jawampa.messages.EventMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
 import ws.wamp.jawampa.messages.SubscribedMessage;
-import ws.wamp.jawampa.messages.UnsubscribeMessage;
 import ws.wamp.jawampa.messages.WampMessage;
+
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class SubscriberTest {
     @Mock private BaseClient baseClient;
@@ -39,18 +32,24 @@ public class SubscriberTest {
     @Mock private ArrayNode arguments;
     @Mock private ObjectNode kwArguments;
 
+    private Subscriber subject;
+    private PublishSubject<PubSubData> resultSubject;
+    @Mock private Observer<PubSubData> publicationObserver;
+
     @Before
     public void setup() {
         initMocks( this );
+
+        subject = new Subscriber( baseClient );
+
+        resultSubject = PublishSubject.create();
+        resultSubject.subscribe( publicationObserver );
+
+        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
     }
 
     @Test
     public void testSubscribeSendsSubscribeMessage() {
-        Subscriber subject = new Subscriber( baseClient );
-        PublishSubject<PubSubData> resultSubject = PublishSubject.create();
-
-        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
-
         subject.subscribe( topic, resultSubject );
 
         ArgumentMatcher<WampMessage> messageMatcher = new ArgumentMatcher<WampMessage>() {
@@ -67,15 +66,6 @@ public class SubscriberTest {
 
     @Test
     public void testEventIsDeliveredAfterSubscription() {
-        Subscriber subject = new Subscriber( baseClient );
-
-        PublishSubject<PubSubData> resultSubject = PublishSubject.create();
-        @SuppressWarnings( "unchecked" )
-        Observer<PubSubData> publicationObserver = mock(Observer.class);
-        resultSubject.subscribe( publicationObserver );
-
-        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
-
         subject.subscribe( topic, resultSubject );
 
         subject.onSubscribed( new SubscribedMessage( RequestId.of( 42L ), SubscriptionId.of( 23L ) ) );
