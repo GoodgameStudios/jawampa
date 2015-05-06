@@ -16,7 +16,7 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 
 import rx.Observer;
-import rx.subjects.AsyncSubject;
+import rx.subjects.PublishSubject;
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.Reply;
 import ws.wamp.jawampa.ids.RequestId;
@@ -46,7 +46,7 @@ public class CallerTest {
     @Test
     public void testCallSendsCallMessage() {
         Caller subject = new Caller( baseClient );
-        AsyncSubject<Reply> resultSubject = AsyncSubject.create();
+        PublishSubject<Reply> resultSubject = PublishSubject.create();
 
         when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
 
@@ -69,7 +69,7 @@ public class CallerTest {
     @Test
     public void testResultIsReturned() {
         Caller subject = new Caller( baseClient );
-        AsyncSubject<Reply> resultSubject = AsyncSubject.create();
+        PublishSubject<Reply> resultSubject = PublishSubject.create();
 
         when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
 
@@ -101,7 +101,7 @@ public class CallerTest {
     @Test
     public void testErrorIsReturned() {
         Caller subject = new Caller( baseClient );
-        AsyncSubject<Reply> resultSubject = AsyncSubject.create();
+        PublishSubject<Reply> resultSubject = PublishSubject.create();
 
         when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
 

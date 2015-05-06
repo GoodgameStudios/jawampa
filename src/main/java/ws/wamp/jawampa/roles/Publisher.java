@@ -1,6 +1,6 @@
 package ws.wamp.jawampa.roles;
 
-import rx.subjects.AsyncSubject;
+import rx.subjects.PublishSubject;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.messages.ErrorMessage;
@@ -20,10 +20,12 @@ public class Publisher extends BaseMessageHandler {
 
     public Publisher( BaseClient baseClient, ObjectMapper mapper ) {
         this.mapper = mapper;
-        this.requestTracker = new RequestTracker<Void>( baseClient );
+        this.requestTracker = new RequestTracker.Builder<Void>( baseClient )
+                                                .completeAsyncOnSuccess()
+                                                .build();
     }
 
-    public void publish( final String topic, final ArrayNode arguments, final ObjectNode argumentsKw, AsyncSubject<Void> resultSubject ) {
+    public void publish( final String topic, final ArrayNode arguments, final ObjectNode argumentsKw, PublishSubject<Void> resultSubject ) {
         requestTracker.sendRequest( resultSubject, new MessageFactory() {
             @Override
             public WampMessage fromRequestId( RequestId requestId ) {

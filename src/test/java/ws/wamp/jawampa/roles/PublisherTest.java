@@ -14,7 +14,7 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
 import rx.Observer;
-import rx.subjects.AsyncSubject;
+import rx.subjects.PublishSubject;
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.ids.PublicationId;
 import ws.wamp.jawampa.ids.RequestId;
@@ -45,7 +45,7 @@ public class PublisherTest {
     @Test
     public void testPublishSendsPublishMessage() {
         Publisher subject = new Publisher( baseClient, mapper );
-        AsyncSubject<Void> resultSubject = AsyncSubject.create();
+        PublishSubject<Void> resultSubject = PublishSubject.create();
 
         when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
 
@@ -69,7 +69,7 @@ public class PublisherTest {
     @Test
     public void testNotificationOfClientOnSuccessfulPublication() {
         Publisher subject = new Publisher( baseClient, mapper );
-        AsyncSubject<Void> resultSubject = AsyncSubject.create();
+        PublishSubject<Void> resultSubject = PublishSubject.create();
 
         when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
 
@@ -87,7 +87,7 @@ public class PublisherTest {
     @Test
     public void testNotificationOfClientOnPublicationError() {
         Publisher subject = new Publisher( baseClient, mapper );
-        AsyncSubject<Void> resultSubject = AsyncSubject.create();
+        PublishSubject<Void> resultSubject = PublishSubject.create();
 
         when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
 

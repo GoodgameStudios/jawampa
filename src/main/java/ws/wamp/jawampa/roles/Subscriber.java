@@ -3,41 +3,54 @@ package ws.wamp.jawampa.roles;
 import java.util.HashMap;
 import java.util.Map;
 
-import rx.subjects.AsyncSubject;
+import rx.subjects.PublishSubject;
 import ws.wamp.jawampa.PubSubData;
 import ws.wamp.jawampa.ids.RequestId;
+import ws.wamp.jawampa.ids.SubscriptionId;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.EventMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
 import ws.wamp.jawampa.messages.SubscribedMessage;
 import ws.wamp.jawampa.messages.UnsubscribedMessage;
+import ws.wamp.jawampa.messages.WampMessage;
 import ws.wamp.jawampa.messages.handling.BaseMessageHandler;
+import ws.wamp.jawampa.roles.RequestTracker.MessageFactory;
 
 public class Subscriber extends BaseMessageHandler {
     private final BaseClient baseClient;
 
-    private final Map<RequestId, AsyncSubject<PubSubData>> registrationRequestId2AsyncSubject = new HashMap<RequestId, AsyncSubject<PubSubData>>();
-    private final Map<RequestId, AsyncSubject<Void>> unregistrationRequestId2AsyncSubject = new HashMap<RequestId, AsyncSubject<Void>>();
+    private final RequestTracker<PubSubData> registrationTracker;
+    private final RequestTracker<Void> unregistrationTracker;
+
+    private final Map<SubscriptionId, PublishSubject<PubSubData>> subscriptionId2PublishSubject = new HashMap<SubscriptionId, PublishSubject<PubSubData>>();
 
     public Subscriber( BaseClient baseClient ) {
         this.baseClient = baseClient;
+
+        registrationTracker = new RequestTracker.Builder<PubSubData>( baseClient ).dontCompleteAsyncOnSuccess()
+                                                                                  .build();
+        unregistrationTracker = new RequestTracker.Builder<Void>( baseClient ).completeAsyncOnSuccess()
+                                                                              .build();
     }
 
-    public void subscribe( String topic, AsyncSubject<PubSubData> resultSubject ) {
-        RequestId requestId = baseClient.getNewRequestId();
-        baseClient.scheduleMessageToRouter( new SubscribeMessage( requestId, null, topic ) );
+    public void subscribe( final String topic, PublishSubject<PubSubData> resultSubject ) {
+        registrationTracker.sendRequest( resultSubject, new MessageFactory() {
+            @Override
+            public WampMessage fromRequestId( RequestId requestId ) {
+                return new SubscribeMessage( requestId, null, topic );
+            }
+        } );
     }
 
-    public void unsubscribe( String topic, AsyncSubject<Void> resultSubject ) {
+    public void unsubscribe( String topic, PublishSubject<Void> resultSubject ) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException();
     }
 
     @Override
     public void onSubscribed( SubscribedMessage msg ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        subscriptionId2PublishSubject.put( msg.subscriptionId, registrationTracker.onSuccess( msg.requestId, null ) );
     }
 
     @Override
@@ -60,7 +73,7 @@ public class Subscriber extends BaseMessageHandler {
 
     @Override
     public void onEvent( EventMessage msg ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        PublishSubject<PubSubData> async = subscriptionId2PublishSubject.get( msg.subscriptionId );
+        async.onNext( new PubSubData( msg.arguments, msg.argumentsKw ) );
     }
 }
