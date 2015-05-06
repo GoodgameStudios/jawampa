@@ -94,13 +94,11 @@ public class Subscriber extends BaseMessageHandler {
 
     @Override
     public void onUnsubscribed( UnsubscribedMessage msg ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        unregistrationTracker.onSuccess( msg.requestId, null );
     }
 
     @Override
     public void onUnsubscribeError( ErrorMessage msg ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        unregistrationTracker.onError( msg );
     }
 }

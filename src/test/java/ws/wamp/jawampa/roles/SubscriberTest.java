@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
@@ -27,6 +28,7 @@ import ws.wamp.jawampa.messages.EventMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
 import ws.wamp.jawampa.messages.SubscribedMessage;
 import ws.wamp.jawampa.messages.UnsubscribeMessage;
+import ws.wamp.jawampa.messages.UnsubscribedMessage;
 import ws.wamp.jawampa.messages.WampMessage;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -36,7 +38,7 @@ public class SubscriberTest {
     private static final RequestId REQUEST_ID = RequestId.of( 42L );
     private static final SubscriptionId SUBSCRIPTION_ID = SubscriptionId.of( 23L );
     private static final PublicationId PUBLICATION_ID = PublicationId.of( 17L );
-    private static final RequestId UN_REQUEST_ID = RequestId.of( 0xDEADBEEF );
+    private static final RequestId UN_REQUEST_ID = RequestId.of( 57L );
 
     @Mock private BaseClient baseClient;
 
@@ -137,5 +139,34 @@ public class SubscriberTest {
         InOrder inOrder = inOrder( baseClient );
         inOrder.verify( baseClient ).scheduleMessageToRouter( any( WampMessage.class ) );
         inOrder.verify( baseClient ).scheduleMessageToRouter( argThat( messageMatcher ) );
+    }
+
+    @Test
+    public void testSuccessfulUnsubscribeIsDeliveredToClient() {
+        subject.subscribe( topic, resultSubject );
+        subject.onSubscribed( new SubscribedMessage( REQUEST_ID, SUBSCRIPTION_ID ) );
+        subject.unsubscribe( topic, unsubscribeSubject );
+        subject.onUnsubscribed( new UnsubscribedMessage( UN_REQUEST_ID ) );
+
+        verify( unsubscriptionObserver, never() ).onNext( any( Void.class ) );
+        verify( unsubscriptionObserver ).onCompleted();
+        verify( unsubscriptionObserver, never() ).onError( any( Throwable.class ) );
+    }
+
+    @Test
+    public void testUnsubscribeErrorIsDeliveredToClient() {
+        subject.subscribe( topic, resultSubject );
+        subject.onSubscribed( new SubscribedMessage( REQUEST_ID, SUBSCRIPTION_ID ) );
+        subject.unsubscribe( topic, unsubscribeSubject );
+        subject.onUnsubscribeError( new ErrorMessage( SubscribeMessage.ID,
+                                                      UN_REQUEST_ID,
+                                                      null,
+                                                      ApplicationError.INVALID_ARGUMENT,
+                                                      null,
+                                                      null ) );
+
+        verify( unsubscriptionObserver, never() ).onNext( any( Void.class ) );
+        verify( unsubscriptionObserver, never() ).onCompleted();
+        verify( unsubscriptionObserver ).onError( any( ApplicationError.class ) );
     }
 }
