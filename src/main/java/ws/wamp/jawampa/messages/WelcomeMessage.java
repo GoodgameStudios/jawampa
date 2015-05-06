@@ -5,7 +5,6 @@ import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.ids.SessionId;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -25,15 +24,11 @@ public class WelcomeMessage extends WampMessage {
         this.details = details;
     }
 
-    public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-        ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add( ID.getValue() );
-        messageNode.add(sessionId.getValue());
-        if (details != null)
-            messageNode.add(details);
-        else
-            messageNode.add(mapper.createObjectNode());
-        return messageNode;
+    public ArrayNode toObjectArray(ObjectMapper mapper) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( sessionId )
+                .add( details )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {

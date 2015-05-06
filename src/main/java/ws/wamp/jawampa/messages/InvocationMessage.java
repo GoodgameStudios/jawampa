@@ -6,7 +6,6 @@ import ws.wamp.jawampa.ids.RegistrationId;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -36,22 +35,14 @@ public class InvocationMessage extends WampMessage {
         this.argumentsKw = argumentsKw;
     }
 
-    public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-        ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add( ID.getValue() );
-        messageNode.add(requestId.getValue());
-        messageNode.add(registrationId.getValue());
-        if (details != null)
-            messageNode.add(details);
-        else
-            messageNode.add(mapper.createObjectNode());
-        if (arguments != null)
-            messageNode.add(arguments);
-        else if (argumentsKw != null)
-            messageNode.add(mapper.createArrayNode());
-        if (argumentsKw != null)
-            messageNode.add(argumentsKw);
-        return messageNode;
+    public ArrayNode toObjectArray(ObjectMapper mapper) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( requestId )
+                .add( registrationId )
+                .add( details )
+                .add( arguments )
+                .add( argumentsKw )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {

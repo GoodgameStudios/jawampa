@@ -6,7 +6,6 @@ import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.ids.SubscriptionId;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
@@ -25,12 +24,11 @@ public class UnsubscribeMessage extends WampMessage {
         this.subscriptionId = subsriptionId;
     }
 
-    public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-        ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add( ID.getValue() );
-        messageNode.add(requestId.getValue());
-        messageNode.add(subscriptionId.getValue());
-        return messageNode;
+    public ArrayNode toObjectArray(ObjectMapper mapper) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( requestId )
+                .add( subscriptionId )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {
