@@ -686,7 +686,7 @@ public class WampRouter {
                 for (Subscription subscriber : subscriptionSet) {
                     if (subscriber.subscriber == handler) continue; // Skip the publisher
                     // Publish the event to the subscriber
-                    EventMessage ev = new EventMessage(subscriber.subscriptionId, publicationId.getValue(),
+                    EventMessage ev = new EventMessage(SubscriptionId.of( subscriber.subscriptionId ), publicationId,
                         null, pub.arguments, pub.argumentsKw);
                     subscriber.subscriber.ctx.writeAndFlush(ev);
                 }

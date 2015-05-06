@@ -2,6 +2,8 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.ids.PublicationId;
+import ws.wamp.jawampa.ids.SubscriptionId;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -19,13 +21,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public class EventMessage extends WampMessage {
     public final static int ID = 36;
-    public final long subscriptionId;
-    public final long publicationId;
+    public final SubscriptionId subscriptionId;
+    public final PublicationId publicationId;
     public final ObjectNode details;
     public final ArrayNode arguments;
     public final ObjectNode argumentsKw;
 
-    public EventMessage(long subscriptionId, long publicationId,
+    public EventMessage(SubscriptionId subscriptionId, PublicationId publicationId,
             ObjectNode details, ArrayNode arguments, ObjectNode argumentsKw) {
         this.subscriptionId = subscriptionId;
         this.publicationId = publicationId;
@@ -37,8 +39,8 @@ public class EventMessage extends WampMessage {
     public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
         ArrayNode messageNode = mapper.createArrayNode();
         messageNode.add(ID);
-        messageNode.add(subscriptionId);
-        messageNode.add(publicationId);
+        messageNode.add(subscriptionId.getValue());
+        messageNode.add(publicationId.getValue());
         if (details != null)
             messageNode.add(details);
         else
@@ -61,8 +63,8 @@ public class EventMessage extends WampMessage {
                     || !messageNode.get(3).isObject())
                 throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-            long subscriptionId = messageNode.get(1).asLong();
-            long publicationId = messageNode.get(2).asLong();
+            SubscriptionId subscriptionId = SubscriptionId.of( messageNode.get(1).asLong() );
+            PublicationId publicationId = PublicationId.of( messageNode.get(2).asLong() );
             ObjectNode details = (ObjectNode) messageNode.get(3);
             ArrayNode arguments = null;
             ObjectNode argumentsKw = null;
