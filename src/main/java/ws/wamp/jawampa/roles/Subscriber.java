@@ -3,6 +3,9 @@ package ws.wamp.jawampa.roles;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
+
 import rx.Observer;
 import rx.subjects.PublishSubject;
 import ws.wamp.jawampa.PubSubData;
@@ -26,7 +29,7 @@ public class Subscriber extends BaseMessageHandler {
     private final RequestTracker<Void> unregistrationTracker;
 
     private final Map<SubscriptionId, PublishSubject<PubSubData>> subscriptionId2publishSubject;
-    private final Map<String, SubscriptionId> topic2subscriptionId;
+    private final BidiMap<String, SubscriptionId> topic2subscriptionId;
 
     public Subscriber( BaseClient baseClient ) {
         this.baseClient = baseClient;
@@ -35,7 +38,7 @@ public class Subscriber extends BaseMessageHandler {
         unregistrationTracker = new RequestTracker<Void>( baseClient );
 
         subscriptionId2publishSubject = new HashMap<SubscriptionId, PublishSubject<PubSubData>>();
-        topic2subscriptionId = new HashMap<String, SubscriptionId>();
+        topic2subscriptionId = new DualHashBidiMap<String, SubscriptionId>();
     }
 
     public void subscribe( final String topic, final PublishSubject<PubSubData> resultSubject ) {
@@ -77,13 +80,35 @@ public class Subscriber extends BaseMessageHandler {
 
     @Override
     public void onEvent( EventMessage msg ) {
-        subscriptionId2publishSubject.get( msg.subscriptionId )
-                                     .onNext( new PubSubData( msg.arguments,
-                                                              msg.argumentsKw ) );
+        if ( subscriptionId2publishSubject.containsKey( msg.subscriptionId ) ) {
+            subscriptionId2publishSubject.get( msg.subscriptionId )
+                                         .onNext( new PubSubData( msg.arguments,
+                                                                  msg.argumentsKw ) );
+        } else {
+            baseClient.onProtocolError();
+        }
     }
 
-    public void unsubscribe( final String topic, PublishSubject<Void> resultSubject ) {
-        unregistrationTracker.sendRequest( resultSubject, new MessageFactory() {
+    public void unsubscribe( final String topic, final PublishSubject<Void> resultSubject ) {
+        PublishSubject<Void> unregistrationSubject = PublishSubject.create();
+        unregistrationSubject.subscribe( new Observer<Void>() {
+            @Override
+            public void onNext( Void t ) {
+                // intentionally empty
+            }
+
+            @Override
+            public void onCompleted() {
+                topic2subscriptionId.remove( topic );
+                resultSubject.onCompleted();
+            }
+
+            @Override
+            public void onError( Throwable e ) {
+                resultSubject.onError( e );
+            }
+        } );
+        unregistrationTracker.sendRequest( unregistrationSubject, new MessageFactory() {
             @Override
             public WampMessage fromRequestId( RequestId requestId ) {
                 return new UnsubscribeMessage( requestId,
