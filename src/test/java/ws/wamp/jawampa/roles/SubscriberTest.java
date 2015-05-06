@@ -2,6 +2,7 @@ package ws.wamp.jawampa.roles;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,6 +11,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 
 import rx.Observer;
@@ -24,6 +26,7 @@ import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.EventMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
 import ws.wamp.jawampa.messages.SubscribedMessage;
+import ws.wamp.jawampa.messages.UnsubscribeMessage;
 import ws.wamp.jawampa.messages.WampMessage;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -33,6 +36,7 @@ public class SubscriberTest {
     private static final RequestId REQUEST_ID = RequestId.of( 42L );
     private static final SubscriptionId SUBSCRIPTION_ID = SubscriptionId.of( 23L );
     private static final PublicationId PUBLICATION_ID = PublicationId.of( 17L );
+    private static final RequestId UN_REQUEST_ID = RequestId.of( 0xDEADBEEF );
 
     @Mock private BaseClient baseClient;
 
@@ -43,6 +47,8 @@ public class SubscriberTest {
     private Subscriber subject;
     private PublishSubject<PubSubData> resultSubject;
     @Mock private Observer<PubSubData> publicationObserver;
+    private PublishSubject<Void> unsubscribeSubject;
+    @Mock private Observer<Void> unsubscriptionObserver;
 
     @Before
     public void setup() {
@@ -53,7 +59,10 @@ public class SubscriberTest {
         resultSubject = PublishSubject.create();
         resultSubject.subscribe( publicationObserver );
 
-        when( baseClient.getNewRequestId() ).thenReturn( REQUEST_ID );
+        unsubscribeSubject = PublishSubject.create();
+        unsubscribeSubject.subscribe( unsubscriptionObserver );
+
+        when( baseClient.getNewRequestId() ).thenReturn( REQUEST_ID ).thenReturn( UN_REQUEST_ID );
     }
 
     @Test
@@ -106,5 +115,27 @@ public class SubscriberTest {
         verify( publicationObserver, never() ).onNext( any( PubSubData.class ) );
         verify( publicationObserver, never()).onCompleted();
         verify( publicationObserver).onError( any( Throwable.class ) );
+    }
+
+    @Test
+    public void testUnsubscribeSendsUnsubscribeMessage() {
+        subject.subscribe( topic, resultSubject );
+
+        subject.onSubscribed( new SubscribedMessage( REQUEST_ID, SUBSCRIPTION_ID ) );
+
+        subject.unsubscribe( topic, unsubscribeSubject );
+
+        ArgumentMatcher<WampMessage> messageMatcher = new ArgumentMatcher<WampMessage>() {
+            @Override
+            public boolean matches( Object argument ) {
+                UnsubscribeMessage message = (UnsubscribeMessage)argument;
+                if ( !message.requestId.equals( UN_REQUEST_ID ) ) return false;
+                if ( !message.subscriptionId.equals( SUBSCRIPTION_ID ) ) return false;
+                return true;
+            }
+        };
+        InOrder inOrder = inOrder( baseClient );
+        inOrder.verify( baseClient ).scheduleMessageToRouter( any( WampMessage.class ) );
+        inOrder.verify( baseClient ).scheduleMessageToRouter( argThat( messageMatcher ) );
     }
 }

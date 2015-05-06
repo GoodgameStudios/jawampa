@@ -106,9 +106,8 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.12</version>
         </dependency>
-
     </dependencies>
-  
+
     <scm>
         <url>https://github.com/Matthias247/jawampa</url>
         <connection>scm:git:https://github.com/Matthias247/jawampa.git</connection>
