@@ -70,7 +70,7 @@ public class Callee extends BaseMessageHandler {
 
             @Override
             public void onError( Throwable e ) {
-                throw new UnsupportedOperationException();
+                resultSubject.onError( e );
             }
         } );
         registrationTracker.sendRequest( registrationSubject, new MessageFactory() {
@@ -95,7 +95,7 @@ public class Callee extends BaseMessageHandler {
 
     @Override
     public void onRegisterError( ErrorMessage msg ) {
-        throw new UnsupportedOperationException();
+        registrationTracker.onError( msg );
     }
 
     @Override

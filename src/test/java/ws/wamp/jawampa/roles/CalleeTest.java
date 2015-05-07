@@ -14,13 +14,17 @@ import org.mockito.Mock;
 
 import rx.Observer;
 import rx.subjects.PublishSubject;
+import ws.wamp.jawampa.ApplicationError;
+import ws.wamp.jawampa.PubSubData;
 import ws.wamp.jawampa.Request;
 import ws.wamp.jawampa.ids.RegistrationId;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.io.BaseClient;
+import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.RegisterMessage;
 import ws.wamp.jawampa.messages.RegisteredMessage;
+import ws.wamp.jawampa.messages.SubscribeMessage;
 import ws.wamp.jawampa.messages.WampMessage;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -95,5 +99,20 @@ public class CalleeTest {
         verify( callObserver ).onNext( argThat( requestMatcher ) );
         verify( callObserver, never()).onCompleted();
         verify( callObserver, never()).onError( any( Throwable.class ) );
+    }
+
+    @Test
+    public void testSubscriptionErrorIsDeliveredToClient() {
+        subject.register( procedure, callSubject );
+
+        subject.onRegisterError( new ErrorMessage( RegisterMessage.ID,
+                                                   REQUEST_ID,
+                                                   null,
+                                                   ApplicationError.INVALID_ARGUMENT,
+                                                   null,
+                                                   null ) );
+        verify( callObserver, never() ).onNext( any( Request.class ) );
+        verify( callObserver, never()).onCompleted();
+        verify( callObserver).onError( any( Throwable.class ) );
     }
 }
