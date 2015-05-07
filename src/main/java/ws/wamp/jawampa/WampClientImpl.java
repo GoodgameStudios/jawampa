@@ -27,6 +27,7 @@ import ws.wamp.jawampa.roles.Callee;
 import ws.wamp.jawampa.roles.Caller;
 import ws.wamp.jawampa.roles.ClientConnection;
 import ws.wamp.jawampa.roles.Publisher;
+import ws.wamp.jawampa.roles.Subscriber;
 import ws.wamp.jawampa.roles.callee.RPCImplementation;
 import ws.wamp.jawampa.transport.WampClientChannelFactory;
 
@@ -50,6 +51,7 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     private final Callee callee;
     private final Publisher publisher;
     private final Caller caller;
+    private final Subscriber subscriber;
     private final ClientConnection clientConnection;
 
     private final BehaviorSubject<Status> externalStatusObservable;
@@ -64,9 +66,10 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
         // TODO Auto-generated constructor stub
         connection = new NettyConnection( channelFactory, this );
 
-        callee = new Callee( this );
-        publisher = new Publisher( this, mapper );
-        caller = new Caller( this );
+        callee = roles.contains( WampRoles.Callee ) ? new Callee( this ) : null;
+        publisher = roles.contains( WampRoles.Publisher ) ? new Publisher( this, mapper ) : null;
+        caller = roles.contains( WampRoles.Caller ) ? new Caller( this ) : null;
+        subscriber = roles.contains( WampRoles.Subscriber ) ? new Subscriber( this ) : null;
         clientConnection = new ClientConnection( this, realm, roles, authId, authMethods, mapper, this );
 
         preWelcomeMessageHandler = new LoggingMessageHandler(
@@ -77,6 +80,7 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
                 new WampPeerBuilder().withCallee( callee )
                                      .withPublisher( publisher )
                                      .withCaller( caller )
+                                     .withSubscriber( subscriber )
                                      .build() );
         connectionState = new Disconnected( this );
         externalStatusObservable = BehaviorSubject.create ( connectionState.getExternalConnectionStatus() );
@@ -139,15 +143,17 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     }
 
     @Override
-    public <T> Observable<T> makeSubscription( String topic, Class<T> eventClass ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
+    public Observable<PubSubData> makeSubscription( final String topic ) {
+        final PublishSubject<PubSubData> resultSubject = PublishSubject.create();
 
-    @Override
-    public Observable<PubSubData> makeSubscription( String topic ) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        connection.executor().execute( new Runnable() {
+            @Override
+            public void run() {
+                subscriber.subscribe( topic, resultSubject );
+            }
+        });
+
+        return resultSubject;
     }
 
     @Override

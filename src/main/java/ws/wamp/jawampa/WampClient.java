@@ -118,31 +118,6 @@ public interface WampClient {
      * Returns an observable that allows to subscribe on the given topic.<br>
      * The actual subscription will only be made after subscribe() was called
      * on it.<br>
-     * This version of makeSubscription will automatically transform the
-     * received events data into the type eventClass and will therefore return
-     * a mapped Observable. It will only look at and transform the first
-     * argument of the received events arguments, therefore it can only be used
-     * for events that carry either a single or no argument.<br>
-     * Received publications will be pushed to the Subscriber via it's
-     * onNext method.<br>
-     * The client can unsubscribe from the topic by calling unsubscribe() on
-     * it's Subscription.<br>
-     * If the connection closes onCompleted will be called.<br>
-     * In case of errors during subscription onError will be called.
-     * @param topic The topic to subscribe on.<br>
-     * Must be valid WAMP URI.
-     * @param eventClass The class type into which the received event argument
-     * should be transformed. E.g. use String.class to let the client try to
-     * transform the first argument into a String and let the return value of
-     * of the call be Observable&lt;String&gt;.
-     * @return An observable that can be used to subscribe on the topic.
-     */
-    public <T> Observable<T> makeSubscription(final String topic, final Class<T> eventClass);
-    
-    /**
-     * Returns an observable that allows to subscribe on the given topic.<br>
-     * The actual subscription will only be made after subscribe() was called
-     * on it.<br>
      * Received publications will be pushed to the Subscriber via it's
      * onNext method.<br>
      * The client can unsubscribe from the topic by calling unsubscribe() on
