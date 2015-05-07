@@ -109,7 +109,6 @@ public interface WampClient {
      * Must be valid WAMP URI.
      * @param rpc The RPCImplementation that gets called
      */
-    // TODO: Maybe we want to return to the old API here?
     public Observable<Request> registerProcedure(final String procedure);
     
 

@@ -132,8 +132,18 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     }
 
     @Override
-    public Observable<Request> registerProcedure( final String topic ) {
-        throw new UnsupportedOperationException();
+    public Observable<Request> registerProcedure( final String procedure ) {
+        // FIXME: This is racy. The first RPC call might arrive before the client has subscribed on the Observable returned.
+        final PublishSubject<Request> resultSubject = PublishSubject.create();
+
+        connection.executor().execute( new Runnable() {
+            @Override
+            public void run() {
+                callee.register( procedure, resultSubject );
+            }
+        });
+
+        return resultSubject;
     }
 
     @Override
