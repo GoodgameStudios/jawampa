@@ -186,4 +186,26 @@ public class CalleeTest {
 
         verify( baseClient ).onProtocolError();
     }
+
+    @Test
+    public void testInvokeDuringUnregisteringMustStillWork() {
+        subject.register( procedure, callSubject );
+        subject.onRegistered( new RegisteredMessage( REQUEST_ID, REGISTRATION_ID ) );
+        subject.unregister( procedure, unsubscribeSubject );
+
+        subject.onInvocation( new InvocationMessage( REQUEST_ID3, REGISTRATION_ID, null, arguments, kwArguments ) );
+
+        ArgumentMatcher<Request> requestMatcher = new ArgumentMatcher<Request>() {
+            @Override
+            public boolean matches( Object argument ) {
+                Request data = (Request)argument;
+                if ( data.arguments() != arguments ) return false;
+                if ( data.keywordArguments() != kwArguments ) return false;
+                return true;
+            }
+        };
+        verify( callObserver ).onNext( argThat( requestMatcher ) );
+        verify( callObserver, never()).onCompleted();
+        verify( callObserver, never()).onError( any( Throwable.class ) );
+    }
 }
