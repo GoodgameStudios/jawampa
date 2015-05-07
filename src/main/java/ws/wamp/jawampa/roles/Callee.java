@@ -27,6 +27,7 @@ import ws.wamp.jawampa.messages.RegisteredMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
 import ws.wamp.jawampa.messages.UnregisterMessage;
 import ws.wamp.jawampa.messages.UnregisteredMessage;
+import ws.wamp.jawampa.messages.UnsubscribeMessage;
 import ws.wamp.jawampa.messages.WampMessage;
 import ws.wamp.jawampa.messages.handling.BaseMessageHandler;
 import ws.wamp.jawampa.roles.RequestTracker.MessageFactory;
@@ -84,11 +85,6 @@ public class Callee extends BaseMessageHandler {
     }
 
     @Override
-    public void onRegister( RegisterMessage msg ) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void onRegistered( RegisteredMessage msg ) {
         registrationTracker.onSuccess( msg.requestId, msg.registrationId );
     }
@@ -113,22 +109,46 @@ public class Callee extends BaseMessageHandler {
     }
 
     public void unregister( final String procedure, final PublishSubject<Void> resultSubject ) {
-        baseClient.scheduleMessageToRouter( new UnregisterMessage( baseClient.getNewRequestId(),
-                                                                   procedureName2registrationId.get( procedure ) ) );
-    }
+        AsyncSubject<Void> unregistrationSubject = AsyncSubject.create();
+        unregistrationSubject.subscribe( new Observer<Void>() {
+            @Override
+            public void onNext( Void t ) {
+                // intentionally empty
+            }
 
-    @Override
-    public void onUnregister( UnregisterMessage msg ) {
-        throw new UnsupportedOperationException();
+            @Override
+            public void onCompleted() {
+                RegistrationId registrationId = procedureName2registrationId.get( procedure );
+                PublishSubject<Request> publishSubject = registrationId2PublishSubject.get( registrationId );
+
+                registrationId2PublishSubject.remove( registrationId );
+                procedureName2registrationId.remove( procedure );
+
+                resultSubject.onCompleted();
+                publishSubject.onCompleted();
+            }
+
+            @Override
+            public void onError( Throwable e ) {
+                resultSubject.onError( e );
+            }
+        } );
+        unregistrationTracker.sendRequest( unregistrationSubject, new MessageFactory() {
+            @Override
+            public WampMessage fromRequestId( RequestId requestId ) {
+                return new UnregisterMessage( baseClient.getNewRequestId(),
+                                              procedureName2registrationId.get( procedure ) );
+            }
+        } );
     }
 
     @Override
     public void onUnregistered( UnregisteredMessage msg ) {
-        throw new UnsupportedOperationException();
+        unregistrationTracker.onSuccess( msg.requestId, null );
     }
 
     @Override
     public void onUnregisterError( ErrorMessage msg ) {
-        throw new UnsupportedOperationException();
+        unregistrationTracker.onError( msg );
     }
 }

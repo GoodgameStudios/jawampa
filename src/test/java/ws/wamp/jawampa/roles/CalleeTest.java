@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import rx.Observer;
 import rx.subjects.PublishSubject;
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.PubSubData;
 import ws.wamp.jawampa.Request;
 import ws.wamp.jawampa.ids.RegistrationId;
 import ws.wamp.jawampa.ids.RequestId;
@@ -27,9 +26,8 @@ import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.RegisterMessage;
 import ws.wamp.jawampa.messages.RegisteredMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
-import ws.wamp.jawampa.messages.SubscribedMessage;
 import ws.wamp.jawampa.messages.UnregisterMessage;
-import ws.wamp.jawampa.messages.UnsubscribeMessage;
+import ws.wamp.jawampa.messages.UnregisteredMessage;
 import ws.wamp.jawampa.messages.WampMessage;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -140,5 +138,36 @@ public class CalleeTest {
         InOrder inOrder = inOrder( baseClient );
         inOrder.verify( baseClient ).scheduleMessageToRouter( any( WampMessage.class ) );
         inOrder.verify( baseClient ).scheduleMessageToRouter( argThat( messageMatcher ) );
+    }
+
+    @Test
+    public void testSuccessfulUnsubscribeIsDeliveredToClient() {
+        subject.register( procedure, callSubject );
+        subject.onRegistered( new RegisteredMessage( REQUEST_ID, REGISTRATION_ID ) );
+        subject.unregister( procedure, unsubscribeSubject );
+
+        subject.onUnregistered( new UnregisteredMessage( REQUEST_ID2 ) );
+
+        verify( unsubscriptionObserver, never() ).onNext( any( Void.class ) );
+        verify( unsubscriptionObserver ).onCompleted();
+        verify( unsubscriptionObserver, never() ).onError( any( Throwable.class ) );
+    }
+
+    @Test
+    public void testUnsubscribeErrorIsDeliveredToClient() {
+        subject.register( procedure, callSubject );
+        subject.onRegistered( new RegisteredMessage( REQUEST_ID, REGISTRATION_ID ) );
+        subject.unregister( procedure, unsubscribeSubject );
+
+        subject.onUnregisterError( new ErrorMessage( SubscribeMessage.ID,
+                                                     REQUEST_ID2,
+                                                     null,
+                                                     ApplicationError.INVALID_ARGUMENT,
+                                                     null,
+                                                     null ) );
+
+        verify( unsubscriptionObserver, never() ).onNext( any( Void.class ) );
+        verify( unsubscriptionObserver, never() ).onCompleted();
+        verify( unsubscriptionObserver ).onError( any( ApplicationError.class ) );
     }
 }
