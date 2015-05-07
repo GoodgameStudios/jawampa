@@ -2,6 +2,7 @@ package ws.wamp.jawampa.roles;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,6 +11,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 
 import rx.Observer;
@@ -25,6 +27,9 @@ import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.RegisterMessage;
 import ws.wamp.jawampa.messages.RegisteredMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
+import ws.wamp.jawampa.messages.SubscribedMessage;
+import ws.wamp.jawampa.messages.UnregisterMessage;
+import ws.wamp.jawampa.messages.UnsubscribeMessage;
 import ws.wamp.jawampa.messages.WampMessage;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -114,5 +119,26 @@ public class CalleeTest {
         verify( callObserver, never() ).onNext( any( Request.class ) );
         verify( callObserver, never()).onCompleted();
         verify( callObserver).onError( any( Throwable.class ) );
+    }
+
+    @Test
+    public void testUnsubscribeSendsUnsubscribeMessage() {
+        subject.register( procedure, callSubject );
+        subject.onRegistered( new RegisteredMessage( REQUEST_ID, REGISTRATION_ID ) );
+
+        subject.unregister( procedure, unsubscribeSubject );
+
+        ArgumentMatcher<WampMessage> messageMatcher = new ArgumentMatcher<WampMessage>() {
+            @Override
+            public boolean matches( Object argument ) {
+                UnregisterMessage message = (UnregisterMessage)argument;
+                if ( !message.requestId.equals( REQUEST_ID2 ) ) return false;
+                if ( !message.registrationId.equals( REGISTRATION_ID ) ) return false;
+                return true;
+            }
+        };
+        InOrder inOrder = inOrder( baseClient );
+        inOrder.verify( baseClient ).scheduleMessageToRouter( any( WampMessage.class ) );
+        inOrder.verify( baseClient ).scheduleMessageToRouter( argThat( messageMatcher ) );
     }
 }

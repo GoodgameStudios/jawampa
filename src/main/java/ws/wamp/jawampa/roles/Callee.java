@@ -113,7 +113,8 @@ public class Callee extends BaseMessageHandler {
     }
 
     public void unregister( final String procedure, final PublishSubject<Void> resultSubject ) {
-        throw new UnsupportedOperationException();
+        baseClient.scheduleMessageToRouter( new UnregisterMessage( baseClient.getNewRequestId(),
+                                                                   procedureName2registrationId.get( procedure ) ) );
     }
 
     @Override
