@@ -1,5 +1,7 @@
 package ws.wamp.jawampa.roles;
 
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -14,6 +16,7 @@ import ws.wamp.jawampa.Request;
 import ws.wamp.jawampa.ids.RegistrationId;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.io.BaseClient;
+import ws.wamp.jawampa.messages.RegisterMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
 import ws.wamp.jawampa.messages.WampMessage;
 
@@ -52,5 +55,21 @@ public class CalleeTest {
         unsubscribeSubject.subscribe( unsubscriptionObserver );
 
         when( baseClient.getNewRequestId() ).thenReturn( REQUEST_ID ).thenReturn( REQUEST_ID2 );
+    }
+
+    @Test
+    public void testRegisterSendsRegisterMessage() {
+        subject.register( procedure, resultSubject );
+
+        ArgumentMatcher<WampMessage> messageMatcher = new ArgumentMatcher<WampMessage>() {
+            @Override
+            public boolean matches( Object argument ) {
+                RegisterMessage message = (RegisterMessage)argument;
+                if ( !message.requestId.equals( REQUEST_ID ) ) return false;
+                if ( message.procedure != procedure ) return false;
+                return true;
+            }
+        };
+        verify( baseClient ).scheduleMessageToRouter( argThat( messageMatcher ) );
     }
 }

@@ -27,8 +27,10 @@ public class Callee extends BaseMessageHandler {
         this.baseClient = baseClient;
     }
 
-    public void register( final String topic, final PublishSubject<Request> resultSubject ) {
-        throw new UnsupportedOperationException();
+    public void register( final String procedure, final PublishSubject<Request> resultSubject ) {
+        baseClient.scheduleMessageToRouter( new RegisterMessage( baseClient.getNewRequestId(),
+                                                                 null,
+                                                                 procedure ) );
     }
 
     @Override
@@ -56,7 +58,7 @@ public class Callee extends BaseMessageHandler {
         throw new UnsupportedOperationException();
     }
 
-    public void unregister( final String topic, final PublishSubject<Void> resultSubject ) {
+    public void unregister( final String procedure, final PublishSubject<Void> resultSubject ) {
         throw new UnsupportedOperationException();
     }
 
