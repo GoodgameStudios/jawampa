@@ -28,7 +28,6 @@ import ws.wamp.jawampa.roles.Caller;
 import ws.wamp.jawampa.roles.ClientConnection;
 import ws.wamp.jawampa.roles.Publisher;
 import ws.wamp.jawampa.roles.Subscriber;
-import ws.wamp.jawampa.roles.callee.RPCImplementation;
 import ws.wamp.jawampa.transport.WampClientChannelFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -133,13 +132,8 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     }
 
     @Override
-    public void registerProcedure( final String topic, final RPCImplementation implementation ) {
-        connection.executor().execute( new Runnable() {
-            @Override
-            public void run() {
-                callee.register( topic, implementation );
-            }
-        });
+    public Observable<Request> registerProcedure( final String topic ) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

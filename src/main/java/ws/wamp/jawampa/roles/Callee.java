@@ -5,6 +5,8 @@
  */
 package ws.wamp.jawampa.roles;
 
+import rx.subjects.PublishSubject;
+import ws.wamp.jawampa.Request;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
@@ -13,74 +15,63 @@ import ws.wamp.jawampa.messages.RegisteredMessage;
 import ws.wamp.jawampa.messages.UnregisterMessage;
 import ws.wamp.jawampa.messages.UnregisteredMessage;
 import ws.wamp.jawampa.messages.handling.BaseMessageHandler;
-import ws.wamp.jawampa.roles.callee.FunctionMap;
-import ws.wamp.jawampa.roles.callee.InvocationMessageHandler;
-import ws.wamp.jawampa.roles.callee.RPCImplementation;
-import ws.wamp.jawampa.roles.callee.RegistrationMessageHandler;
-import ws.wamp.jawampa.roles.callee.UnregistrationMessageHandler;
 
 /**
  *
  * @author hkraemer@ggs-hh.net
  */
 public class Callee extends BaseMessageHandler {
-    private final FunctionMap map;
-    private final InvocationMessageHandler imh;
-    private final RegistrationMessageHandler rmh;
-    private final UnregistrationMessageHandler urmh;
+    private final BaseClient baseClient;
 
     public Callee( BaseClient baseClient ) {
-        map = new FunctionMap();
-        imh = new InvocationMessageHandler( baseClient, map );
-        rmh = new RegistrationMessageHandler( baseClient, map.getRegistrationsSubject() );
-        urmh = new UnregistrationMessageHandler( baseClient, map.getUnregistrationsSubject() );
+        this.baseClient = baseClient;
+    }
+
+    public void register( final String topic, final PublishSubject<Request> resultSubject ) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void onRegister( RegisterMessage msg ) {
-        rmh.onRegister( msg );
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void onRegistered( RegisteredMessage msg ) {
-        rmh.onRegistered( msg );
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void onRegisterError( ErrorMessage msg ) {
-        rmh.onRegisterError( msg );
-    }
-
-    @Override
-    public void onUnregister( UnregisterMessage msg ) {
-        urmh.onUnregister( msg );
-    }
-
-    @Override
-    public void onUnregistered( UnregisteredMessage msg ) {
-        urmh.onUnregistered( msg );
-    }
-
-    @Override
-    public void onUnregisterError( ErrorMessage msg ) {
-        urmh.onUnregisterError( msg );
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void onInvocation( InvocationMessage msg ) {
-        imh.onInvocation( msg );
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void onInvocationError( ErrorMessage msg ) {
-        imh.onInvocationError( msg );
+        throw new UnsupportedOperationException();
     }
 
-    public void register( String uri, RPCImplementation implementation ) {
-        map.register( uri, implementation );
+    public void unregister( final String topic, final PublishSubject<Void> resultSubject ) {
+        throw new UnsupportedOperationException();
     }
 
-    public void unregister( String uri ) {
-        map.unregister( uri );
+    @Override
+    public void onUnregister( UnregisterMessage msg ) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void onUnregistered( UnregisteredMessage msg ) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void onUnregisterError( ErrorMessage msg ) {
+        throw new UnsupportedOperationException();
     }
 }
