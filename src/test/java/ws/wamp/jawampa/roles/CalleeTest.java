@@ -208,4 +208,15 @@ public class CalleeTest {
         verify( callObserver, never()).onCompleted();
         verify( callObserver, never()).onError( any( Throwable.class ) );
     }
+
+    @Test
+    public void testRegistrationSubjectIsCompletedWhenUnsubscribeIsSuccessful() {
+        subject.register( procedure, callSubject );
+        subject.onRegistered( new RegisteredMessage( REQUEST_ID, REGISTRATION_ID ) );
+        subject.unregister( procedure, unsubscribeSubject );
+        subject.onUnregistered( new UnregisteredMessage( REQUEST_ID2 ) );
+
+        verify( callObserver ).onCompleted();
+        verify( callObserver, never()).onError( any( Throwable.class ) );
+    }
 }
