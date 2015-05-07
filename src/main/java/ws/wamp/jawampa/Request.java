@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2014 Matthias Einwag
  *
@@ -14,9 +15,8 @@
  * under the License.
  */
 
-package ws.wamp.jawampa.roles.callee;
+package ws.wamp.jawampa;
 
-import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.internal.UriValidator;
 import ws.wamp.jawampa.io.BaseClient;
@@ -34,20 +34,28 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * {@link #replyError(String, ArrayNode, ObjectNode)}} should be called in
  * order to send a positive or negative response back to the caller.
  */
-public class Response {
+public class Request {
     private final BaseClient baseClient;
     private final RequestId requestId;
 
-    private Object lock = new Object();
+    private final ArrayNode arguments;
+    private final ObjectNode keywordArguments;
 
-    private boolean replySent = false;
-
-    public Response( BaseClient baseClient, RequestId requestId )
-    {
-        this.baseClient = baseClient;
-        this.requestId = requestId;
+    public ArrayNode arguments() {
+        return arguments;
     }
 
+    public ObjectNode keywordArguments() {
+        return keywordArguments;
+    }
+
+    public Request( BaseClient baseClient, RequestId requestId, ArrayNode arguments, ObjectNode keywordArguments ) {
+        this.baseClient = baseClient;
+        this.requestId = requestId;
+        this.arguments = arguments;
+        this.keywordArguments = keywordArguments;
+    }
+    
     /**
      * Send an error message in response to the request.<br>
      * If this is called more than once then the following invocations will
@@ -55,9 +63,9 @@ public class Response {
      * @param error The ApplicationError that shoul be serialized and sent
      * as an exceptional response. Must not be null.
      */
-    public void replyError(ApplicationError error) throws ApplicationError{
-        if (error == null || error.uri() == null) throw new NullPointerException();
-        replyError(error.uri(), error.arguments(), error.keywordArguments());
+    public void replyError( ApplicationError error ) throws ApplicationError {
+        if ( error == null || error.uri() == null ) throw new NullPointerException();
+        replyError( error.uri(), error.arguments(), error.keywordArguments() );
     }
     
     /**
@@ -69,23 +77,15 @@ public class Response {
      * @param arguments The positional arguments to sent in the response
      * @param keywordArguments The keyword arguments to sent in the response
      */
-    public void replyError(String errorUri, ArrayNode arguments, ObjectNode keywordArguments) throws ApplicationError {
-        synchronized(lock) {
-            if ( replySent ) {
-                throw new IllegalStateException("Reply was already sent!");
-            }
-            replySent = true;
-        }
+    public void replyError( String errorUri, ArrayNode arguments, ObjectNode keywordArguments ) throws ApplicationError {
+        UriValidator.validate(errorUri, false);
 
-        UriValidator.validate(errorUri);
-
-        final ErrorMessage msg = new ErrorMessage(InvocationMessage.ID, 
-                                                  requestId, null, errorUri,
-                                                  arguments, keywordArguments);
-
+        final ErrorMessage msg = new ErrorMessage( InvocationMessage.ID, 
+                                                   requestId, null, errorUri,
+                                                   arguments, keywordArguments );
         baseClient.scheduleMessageToRouter( msg );
     }
-    
+
     /**
      * Send a normal response to the request.<br>
      * If this is called more than once then the following invocations will
@@ -93,17 +93,9 @@ public class Response {
      * @param arguments The positional arguments to sent in the response
      * @param keywordArguments The keyword arguments to sent in the response
      */
-    public void reply(ArrayNode arguments, ObjectNode keywordArguments) {
-        synchronized(lock) {
-            if ( replySent ) {
-                throw new IllegalStateException("Reply was already sent!");
-            }
-            replySent = true;
-        }
-
-        final YieldMessage msg = new YieldMessage(requestId, null,
-                                                  arguments, keywordArguments);
-
+    public void reply( ArrayNode arguments, ObjectNode keywordArguments ) {
+        final YieldMessage msg = new YieldMessage( requestId, null,
+                                                   arguments, keywordArguments );
         baseClient.scheduleMessageToRouter( msg );
     }
 }
