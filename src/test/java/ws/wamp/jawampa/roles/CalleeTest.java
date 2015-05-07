@@ -1,6 +1,8 @@
 package ws.wamp.jawampa.roles;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -16,8 +18,9 @@ import ws.wamp.jawampa.Request;
 import ws.wamp.jawampa.ids.RegistrationId;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.io.BaseClient;
+import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.RegisterMessage;
-import ws.wamp.jawampa.messages.SubscribeMessage;
+import ws.wamp.jawampa.messages.RegisteredMessage;
 import ws.wamp.jawampa.messages.WampMessage;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -37,8 +40,8 @@ public class CalleeTest {
     @Mock private ObjectNode replyKwArguments;
 
     private Callee subject;
-    private PublishSubject<Request> resultSubject;
-    @Mock private Observer<Request> resultObserver;
+    private PublishSubject<Request> callSubject;
+    @Mock private Observer<Request> callObserver;
     private PublishSubject<Void> unsubscribeSubject;
     @Mock private Observer<Void> unsubscriptionObserver;
 
@@ -48,8 +51,8 @@ public class CalleeTest {
 
         subject = new Callee( baseClient );
 
-        resultSubject = PublishSubject.create();
-        resultSubject.subscribe( resultObserver );
+        callSubject = PublishSubject.create();
+        callSubject.subscribe( callObserver );
 
         unsubscribeSubject = PublishSubject.create();
         unsubscribeSubject.subscribe( unsubscriptionObserver );
@@ -59,7 +62,7 @@ public class CalleeTest {
 
     @Test
     public void testRegisterSendsRegisterMessage() {
-        subject.register( procedure, resultSubject );
+        subject.register( procedure, callSubject );
 
         ArgumentMatcher<WampMessage> messageMatcher = new ArgumentMatcher<WampMessage>() {
             @Override
@@ -71,5 +74,26 @@ public class CalleeTest {
             }
         };
         verify( baseClient ).scheduleMessageToRouter( argThat( messageMatcher ) );
+    }
+
+    @Test
+    public void testMethodIsCalledAfterRegistration() {
+        subject.register( procedure, callSubject );
+        subject.onRegistered( new RegisteredMessage( REQUEST_ID, REGISTRATION_ID ) );
+
+        subject.onInvocation( new InvocationMessage( REQUEST_ID2, REGISTRATION_ID, null, arguments, kwArguments ) );
+
+        ArgumentMatcher<Request> requestMatcher = new ArgumentMatcher<Request>() {
+            @Override
+            public boolean matches( Object argument ) {
+                Request data = (Request)argument;
+                if ( data.arguments() != arguments ) return false;
+                if ( data.keywordArguments() != kwArguments ) return false;
+                return true;
+            }
+        };
+        verify( callObserver ).onNext( argThat( requestMatcher ) );
+        verify( callObserver, never()).onCompleted();
+        verify( callObserver, never()).onError( any( Throwable.class ) );
     }
 }
