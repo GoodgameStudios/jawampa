@@ -96,11 +96,15 @@ public class Callee extends BaseMessageHandler {
 
     @Override
     public void onInvocation( InvocationMessage msg ) {
-        registrationId2PublishSubject.get( msg.registrationId )
-                                     .onNext( new Request( baseClient,
-                                                           msg.requestId,
-                                                           msg.arguments,
-                                                           msg.argumentsKw ) );
+        if ( registrationId2PublishSubject.containsKey( msg.registrationId ) ) {
+            registrationId2PublishSubject.get( msg.registrationId )
+                                         .onNext( new Request( baseClient,
+                                                               msg.requestId,
+                                                               msg.arguments,
+                                                               msg.argumentsKw ) );
+        } else {
+            baseClient.onProtocolError();
+        }
     }
 
     @Override

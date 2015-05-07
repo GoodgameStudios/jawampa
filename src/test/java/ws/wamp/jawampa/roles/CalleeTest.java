@@ -22,12 +22,15 @@ import ws.wamp.jawampa.ids.RegistrationId;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.messages.ErrorMessage;
+import ws.wamp.jawampa.messages.EventMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.RegisterMessage;
 import ws.wamp.jawampa.messages.RegisteredMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
+import ws.wamp.jawampa.messages.SubscribedMessage;
 import ws.wamp.jawampa.messages.UnregisterMessage;
 import ws.wamp.jawampa.messages.UnregisteredMessage;
+import ws.wamp.jawampa.messages.UnsubscribedMessage;
 import ws.wamp.jawampa.messages.WampMessage;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -36,6 +39,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class CalleeTest {
     private static final RequestId REQUEST_ID = RequestId.of( 42L );
     private static final RequestId REQUEST_ID2 = RequestId.of( 57L );
+    private static final RequestId REQUEST_ID3 = RequestId.of( 97L );
     private static final RegistrationId REGISTRATION_ID = RegistrationId.of( 23L );
 
     @Mock private BaseClient baseClient;
@@ -169,5 +173,17 @@ public class CalleeTest {
         verify( unsubscriptionObserver, never() ).onNext( any( Void.class ) );
         verify( unsubscriptionObserver, never() ).onCompleted();
         verify( unsubscriptionObserver ).onError( any( ApplicationError.class ) );
+    }
+
+    @Test
+    public void testInvokeAfterUnregisteredIsAnError() {
+        subject.register( procedure, callSubject );
+        subject.onRegistered( new RegisteredMessage( REQUEST_ID, REGISTRATION_ID ) );
+        subject.unregister( procedure, unsubscribeSubject );
+        subject.onUnregistered( new UnregisteredMessage( REQUEST_ID2 ) );
+
+        subject.onInvocation( new InvocationMessage( REQUEST_ID3, REGISTRATION_ID, null, arguments, kwArguments ) );
+
+        verify( baseClient ).onProtocolError();
     }
 }
