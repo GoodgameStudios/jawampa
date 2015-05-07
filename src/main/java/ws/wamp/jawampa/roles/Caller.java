@@ -1,6 +1,6 @@
 package ws.wamp.jawampa.roles;
 
-import rx.subjects.PublishSubject;
+import rx.subjects.AsyncSubject;
 import ws.wamp.jawampa.Reply;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.io.BaseClient;
@@ -21,7 +21,7 @@ public class Caller extends BaseMessageHandler {
         this.requestTracker = new RequestTracker<Reply>( baseClient );
     }
 
-    public void call( final String procedure, final ArrayNode arguments, final ObjectNode kwArguments, PublishSubject<Reply> resultSubject ) {
+    public void call( final String procedure, final ArrayNode arguments, final ObjectNode kwArguments, AsyncSubject<Reply> resultSubject ) {
         requestTracker.sendRequest( resultSubject, new MessageFactory() {
             @Override
             public WampMessage fromRequestId( RequestId requestId ) {

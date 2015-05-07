@@ -7,6 +7,7 @@ import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
 import rx.Observer;
+import rx.subjects.AsyncSubject;
 import rx.subjects.PublishSubject;
 import ws.wamp.jawampa.PubSubData;
 import ws.wamp.jawampa.ids.RequestId;
@@ -42,7 +43,7 @@ public class Subscriber extends BaseMessageHandler {
     }
 
     public void subscribe( final String topic, final PublishSubject<PubSubData> resultSubject ) {
-        PublishSubject<SubscriptionId> registrationSubject = PublishSubject.create();
+        AsyncSubject<SubscriptionId> registrationSubject = AsyncSubject.create();
         registrationSubject.subscribe( new Observer<SubscriptionId>() {
             @Override
             public void onNext( SubscriptionId subscriptionId ) {
@@ -90,7 +91,7 @@ public class Subscriber extends BaseMessageHandler {
     }
 
     public void unsubscribe( final String topic, final PublishSubject<Void> resultSubject ) {
-        PublishSubject<Void> unregistrationSubject = PublishSubject.create();
+        AsyncSubject<Void> unregistrationSubject = AsyncSubject.create();
         unregistrationSubject.subscribe( new Observer<Void>() {
             @Override
             public void onNext( Void t ) {

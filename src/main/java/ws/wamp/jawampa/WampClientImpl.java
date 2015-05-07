@@ -1,6 +1,5 @@
 package ws.wamp.jawampa;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Set;
 
@@ -9,8 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import rx.Observable;
 import rx.functions.Action1;
-import rx.subjects.PublishSubject;
+import rx.subjects.AsyncSubject;
 import rx.subjects.BehaviorSubject;
+import rx.subjects.PublishSubject;
 import ws.wamp.jawampa.auth.client.ClientSideAuthentication;
 import ws.wamp.jawampa.connectionStates.Disconnected;
 import ws.wamp.jawampa.connectionStates.HasConnectionState;
@@ -120,7 +120,7 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
 
     @Override
     public Observable<Void> publish( final String topic, final ArrayNode arguments, final ObjectNode argumentsKw ) {
-        final PublishSubject<Void> resultSubject = PublishSubject.create();
+        final AsyncSubject<Void> resultSubject = AsyncSubject.create();
 
         connection.executor().execute( new Runnable() {
             @Override
@@ -158,7 +158,7 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
 
     @Override
     public Observable<Reply> call( final String procedure, final ArrayNode arguments, final ObjectNode argumentsKw ) {
-        final PublishSubject<Reply> resultSubject = PublishSubject.create();
+        final AsyncSubject<Reply> resultSubject = AsyncSubject.create();
 
         connection.executor().execute( new Runnable() {
             @Override
