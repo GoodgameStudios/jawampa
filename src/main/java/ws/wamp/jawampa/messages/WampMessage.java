@@ -30,7 +30,7 @@ public abstract class WampMessage {
                 || !messageNode.get(0).canConvertToInt())
             throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-        int messageType = messageNode.get(0).asInt();
+        MessageCode messageType = MessageCode.of( messageNode.get(0).asInt() );
         WampMessageFactory factory = messageFactories.get(messageType);
         if (factory == null)
             return null; // We can't find the message type, so we skip it
