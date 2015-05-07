@@ -22,15 +22,12 @@ import ws.wamp.jawampa.ids.RegistrationId;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.messages.ErrorMessage;
-import ws.wamp.jawampa.messages.EventMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.RegisterMessage;
 import ws.wamp.jawampa.messages.RegisteredMessage;
 import ws.wamp.jawampa.messages.SubscribeMessage;
-import ws.wamp.jawampa.messages.SubscribedMessage;
 import ws.wamp.jawampa.messages.UnregisterMessage;
 import ws.wamp.jawampa.messages.UnregisteredMessage;
-import ws.wamp.jawampa.messages.UnsubscribedMessage;
 import ws.wamp.jawampa.messages.WampMessage;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
