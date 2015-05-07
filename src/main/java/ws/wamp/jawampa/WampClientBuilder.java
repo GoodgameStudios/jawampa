@@ -136,7 +136,7 @@ public class WampClientBuilder {
      * At least one role is required, otherwise the session can not be established.
      * @return The {@link WampClientBuilder} object
      */
-    public WampClientBuilder withRoles(WampRoles[] roles) {
+    public WampClientBuilder withRoles(WampRoles... roles) {
         this.roles.clear();
         if (roles == null) return this; // Will throw on build()
         for (WampRoles role : roles) {
