@@ -17,7 +17,6 @@
 
 package ws.wamp.jawampa;
 
-import rx.functions.Action0;
 import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.internal.UriValidator;
 import ws.wamp.jawampa.io.BaseClient;
