@@ -59,7 +59,7 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     private final MessageHandler postWelcomeMessageHandler;
     private MessageHandler messageHandler;
 
-    public WampClientImpl( URI routerUri, String realm, Set<WampRoles> roles, boolean closeOnErrors, WampClientChannelFactory channelFactory,
+    public WampClientImpl( String realm, Set<WampRoles> roles, boolean closeOnErrors, WampClientChannelFactory channelFactory,
             int nrReconnects, int reconnectInterval, String authId, List<ClientSideAuthentication> authMethods ) {
         // TODO Auto-generated constructor stub
         connection = new NettyConnection( channelFactory, this );
