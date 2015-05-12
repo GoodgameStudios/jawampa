@@ -48,7 +48,8 @@ public class CallerTest {
         subject = new Caller( baseClient );
         resultSubject = AsyncSubject.create();
 
-        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
+        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) )
+                                            .thenThrow( new IllegalStateException( "No more request ids for you!" ) );
 
     }
 

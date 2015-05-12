@@ -65,7 +65,9 @@ public class CalleeTest {
         unsubscribeSubject = PublishSubject.create();
         unsubscribeSubject.subscribe( unsubscriptionObserver );
 
-        when( baseClient.getNewRequestId() ).thenReturn( REQUEST_ID ).thenReturn( REQUEST_ID2 );
+        when( baseClient.getNewRequestId() ).thenReturn( REQUEST_ID )
+                                            .thenReturn( REQUEST_ID2 )
+                                            .thenThrow( new IllegalStateException( "No more request ids for you!" ) );
     }
 
     @Test

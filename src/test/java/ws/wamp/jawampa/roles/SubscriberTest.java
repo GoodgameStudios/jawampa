@@ -63,7 +63,9 @@ public class SubscriberTest {
         unsubscribeSubject = PublishSubject.create();
         unsubscribeSubject.subscribe( unsubscriptionObserver );
 
-        when( baseClient.getNewRequestId() ).thenReturn( REQUEST_ID ).thenReturn( UN_REQUEST_ID );
+        when( baseClient.getNewRequestId() ).thenReturn( REQUEST_ID )
+                                            .thenReturn( UN_REQUEST_ID )
+                                            .thenThrow( new IllegalStateException( "No more request ids for you!" ) );
     }
 
     @Test

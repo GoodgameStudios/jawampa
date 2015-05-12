@@ -47,7 +47,8 @@ public class PublisherTest {
         subject = new Publisher( baseClient, mapper );
         resultSubject = AsyncSubject.create();
 
-        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
+        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) )
+                                            .thenThrow( new IllegalStateException( "No more request ids for you!" ) );
     }
 
     @Test

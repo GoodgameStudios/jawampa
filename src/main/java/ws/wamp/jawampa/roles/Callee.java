@@ -136,7 +136,7 @@ public class Callee extends BaseMessageHandler {
         unregistrationTracker.sendRequest( unregistrationSubject, new MessageFactory() {
             @Override
             public WampMessage fromRequestId( RequestId requestId ) {
-                return new UnregisterMessage( baseClient.getNewRequestId(),
+                return new UnregisterMessage( requestId,
                                               procedureName2registrationId.get( procedure ) );
             }
         } );
