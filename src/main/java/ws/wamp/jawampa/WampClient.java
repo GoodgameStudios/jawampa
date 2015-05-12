@@ -17,6 +17,7 @@
 package ws.wamp.jawampa;
 
 import rx.Observable;
+import ws.wamp.jawampa.registrations.Procedure;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -109,7 +110,7 @@ public interface WampClient {
      * Must be valid WAMP URI.
      * @param rpc The RPCImplementation that gets called
      */
-    public Observable<Request> registerProcedure(final String procedure);
+    public Procedure.Builder startRegisteringProcedure(final String procedure);
     
 
     /**

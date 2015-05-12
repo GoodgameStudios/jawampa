@@ -23,6 +23,7 @@ import ws.wamp.jawampa.messages.WampMessage;
 import ws.wamp.jawampa.messages.handling.LoggingMessageHandler;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 import ws.wamp.jawampa.messages.handling.WampPeerBuilder;
+import ws.wamp.jawampa.registrations.Procedure;
 import ws.wamp.jawampa.roles.Callee;
 import ws.wamp.jawampa.roles.Caller;
 import ws.wamp.jawampa.roles.ClientConnection;
@@ -132,18 +133,8 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     }
 
     @Override
-    public Observable<Request> registerProcedure( final String procedure ) {
-        // FIXME: This is racy. The first RPC call might arrive before the client has subscribed on the Observable returned.
-        final PublishSubject<Request> resultSubject = PublishSubject.create();
-
-        connection.executor().execute( new Runnable() {
-            @Override
-            public void run() {
-                callee.register( procedure, resultSubject );
-            }
-        });
-
-        return resultSubject;
+    public Procedure.Builder startRegisteringProcedure( final String procedure ) {
+        return new Procedure.Builder( connection.executor(), callee, procedure );
     }
 
     @Override
