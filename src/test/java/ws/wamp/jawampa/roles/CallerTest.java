@@ -38,18 +38,22 @@ public class CallerTest {
     @Mock private ArrayNode results;
     @Mock private ObjectNode kwResults;
 
+    private Caller subject;
+    private AsyncSubject<Reply> resultSubject;
+
     @Before
     public void setup() {
         initMocks( this );
+
+        subject = new Caller( baseClient );
+        resultSubject = AsyncSubject.create();
+
+        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
+
     }
 
     @Test
     public void testCallSendsCallMessage() {
-        Caller subject = new Caller( baseClient );
-        AsyncSubject<Reply> resultSubject = AsyncSubject.create();
-
-        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
-
         subject.call( procedure, arguments, kwArguments, resultSubject );
 
         ArgumentMatcher<WampMessage> messageMatcher = new ArgumentMatcher<WampMessage>() {
@@ -68,11 +72,6 @@ public class CallerTest {
 
     @Test
     public void testResultIsReturned() {
-        Caller subject = new Caller( baseClient );
-        AsyncSubject<Reply> resultSubject = AsyncSubject.create();
-
-        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
-
         subject.call( procedure, arguments, kwArguments, resultSubject );
         @SuppressWarnings( "unchecked" )
         Observer<Reply> observer = mock(Observer.class);
@@ -100,11 +99,6 @@ public class CallerTest {
 
     @Test
     public void testErrorIsReturned() {
-        Caller subject = new Caller( baseClient );
-        AsyncSubject<Reply> resultSubject = AsyncSubject.create();
-
-        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
-
         subject.call( procedure, arguments, kwArguments, resultSubject );
         @SuppressWarnings( "unchecked" )
         Observer<Reply> observer = mock(Observer.class);

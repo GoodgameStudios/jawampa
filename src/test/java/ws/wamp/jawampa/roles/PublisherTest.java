@@ -37,18 +37,21 @@ public class PublisherTest {
     @Mock private ArrayNode arguments;
     @Mock private ObjectNode kwArguments;
 
+    private Publisher subject;
+    private AsyncSubject<Void> resultSubject;
+
     @Before
     public void setup() {
         initMocks( this );
+
+        subject = new Publisher( baseClient, mapper );
+        resultSubject = AsyncSubject.create();
+
+        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
     }
 
     @Test
     public void testPublishSendsPublishMessage() {
-        Publisher subject = new Publisher( baseClient, mapper );
-        AsyncSubject<Void> resultSubject = AsyncSubject.create();
-
-        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
-
         subject.publish( topic, arguments, kwArguments, resultSubject );
 
         ArgumentMatcher<WampMessage> messageMatcher = new ArgumentMatcher<WampMessage>() {
@@ -68,11 +71,6 @@ public class PublisherTest {
 
     @Test
     public void testNotificationOfClientOnSuccessfulPublication() {
-        Publisher subject = new Publisher( baseClient, mapper );
-        AsyncSubject<Void> resultSubject = AsyncSubject.create();
-
-        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
-
         subject.publish( topic, arguments, kwArguments, resultSubject );
         @SuppressWarnings( "unchecked" )
         Observer<Void> observer = mock(Observer.class);
@@ -86,11 +84,6 @@ public class PublisherTest {
 
     @Test
     public void testNotificationOfClientOnPublicationError() {
-        Publisher subject = new Publisher( baseClient, mapper );
-        AsyncSubject<Void> resultSubject = AsyncSubject.create();
-
-        when( baseClient.getNewRequestId() ).thenReturn( RequestId.of( 42L ) );
-
         subject.publish( topic, arguments, kwArguments, resultSubject );
         @SuppressWarnings( "unchecked" )
         Observer<Void> observer = mock(Observer.class);
