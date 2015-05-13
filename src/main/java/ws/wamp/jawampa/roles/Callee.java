@@ -6,7 +6,9 @@
 package ws.wamp.jawampa.roles;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
@@ -41,6 +43,14 @@ public class Callee extends BaseMessageHandler {
     private final Map<RegistrationId, PublishSubject<Request>> registrationId2PublishSubject;
     private final BidiMap<String, RegistrationId> procedureName2registrationId;
 
+    private final Set<String> pendingRegistrations;
+    /*
+     * An entry for a procedure is in this set, iff
+     * - unregister was called
+     * - neither REGISTERED nor ERROR was yet recieved in response to REGISTER
+     */
+    private final Map<String, PublishSubject<Void>> earlyUnregistrations;
+
     public Callee( BaseClient baseClient ) {
         this.baseClient = baseClient;
 
@@ -49,6 +59,9 @@ public class Callee extends BaseMessageHandler {
 
         registrationId2PublishSubject = new HashMap<RegistrationId, PublishSubject<Request>>();
         procedureName2registrationId = new DualHashBidiMap<String, RegistrationId>();
+
+        pendingRegistrations = new HashSet<String>();
+        earlyUnregistrations = new HashMap<String, PublishSubject<Void>>();
     }
 
     public void register( final String procedure, final PublishSubject<Request> resultSubject ) {
@@ -58,6 +71,10 @@ public class Callee extends BaseMessageHandler {
             public void onNext( RegistrationId subscriptionId ) {
                 registrationId2PublishSubject.put( subscriptionId, resultSubject );
                 procedureName2registrationId.put( procedure, subscriptionId );
+                pendingRegistrations.remove( procedure );
+                if ( earlyUnregistrations.containsKey( procedure ) ) {
+                    doUnregister( procedure, earlyUnregistrations.get( procedure ) );
+                }
             }
 
             @Override
@@ -67,9 +84,12 @@ public class Callee extends BaseMessageHandler {
 
             @Override
             public void onError( Throwable e ) {
+                pendingRegistrations.remove( procedure );
+                earlyUnregistrations.remove( procedure );
                 resultSubject.onError( e );
             }
         } );
+        pendingRegistrations.add( procedure );
         registrationTracker.sendRequest( registrationSubject, new MessageFactory() {
             @Override
             public WampMessage fromRequestId( RequestId requestId ) {
@@ -108,7 +128,7 @@ public class Callee extends BaseMessageHandler {
         throw new UnsupportedOperationException();
     }
 
-    public void unregister( final String procedure, final PublishSubject<Void> resultSubject ) {
+    private void doUnregister( final String procedure, final PublishSubject<Void> resultSubject ) {
         AsyncSubject<Void> unregistrationSubject = AsyncSubject.create();
         unregistrationSubject.subscribe( new Observer<Void>() {
             @Override
@@ -140,6 +160,16 @@ public class Callee extends BaseMessageHandler {
                                               procedureName2registrationId.get( procedure ) );
             }
         } );
+        earlyUnregistrations.remove( procedure );
+    }
+
+    public void unregister( final String procedure, final PublishSubject<Void> resultSubject ) {
+        if ( pendingRegistrations.contains( procedure ) ) {
+            // unregister was called before REGISTERED was received
+            earlyUnregistrations.put( procedure, resultSubject );
+        } else {
+            doUnregister( procedure, resultSubject );
+        }
     }
 
     @Override

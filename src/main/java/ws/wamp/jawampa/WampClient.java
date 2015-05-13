@@ -17,6 +17,8 @@
 package ws.wamp.jawampa;
 
 import rx.Observable;
+import ws.wamp.jawampa.registrations.Procedure;
+import ws.wamp.jawampa.registrations.Subscription;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -37,19 +39,6 @@ public interface WampClient {
         CONNECTED,
     }
 
-    public enum PubSubState {
-        Subscribing,
-        Subscribed,
-        Unsubscribing,
-        Unsubscribed
-    }
-    
-    public enum RegistrationState {
-        Registering,
-        Registered,
-        Unregistering,
-        Unregistered
-    }
     /**
      * Opens the session<br>
      * This should be called after a subscription on {@link #statusChanged}
@@ -77,19 +66,6 @@ public interface WampClient {
     /**
      * Publishes an event under the given topic.
      * @param topic The topic that should be used for publishing the event
-     * @param args A list of all positional arguments of the event to publish.
-     * These will be get serialized according to the Jackson library serializing
-     * behavior.
-     * @return An observable that provides a notification whether the event
-     * publication was successful. This contains either a single value (the
-     * publication ID) and will then be completed or will be completed with
-     * an error if the event could not be published.
-     */
-    public Observable<Void> publish(final String topic, Object... args);
-    
-    /**
-     * Publishes an event under the given topic.
-     * @param topic The topic that should be used for publishing the event
      * @param arguments The positional arguments for the published event
      * @param argumentsKw The keyword arguments for the published event.
      * These will only be taken into consideration if arguments is not null.
@@ -102,31 +78,47 @@ public interface WampClient {
         final ObjectNode argumentsKw);
     
     /**
-     * Registers a procedure at the router which will afterwards be available
-     * for remote procedure calls from other clients.<br>
-     * @param topic The name of the procedure which this client wants to
+     * Begins registering a procedure at the router which will afterwards be
+     * available for remote procedure calls from other clients.<br>
+     * To actually register the procedure, do something like
+     * <pre>
+     * wampclient.startRegisteringProcedure( procedure )
+     *           .onError( someLambda )
+     *           .onFinished( someLambda )
+     *           .onCall( someLambda )
+     *           .register()
+     * </pre>
+     * To unregister the procedure, call unregister() on the Procedure object
+     * returned from Procedure.Builder.register()<br>
+     * @param procedure The name of the procedure which this client wants to
      * provide.<br>
      * Must be valid WAMP URI.
-     * @param rpc The RPCImplementation that gets called
+     * @return A Procedure.Builder that can be used to register a procedure.
      */
-    public Observable<Request> registerProcedure(final String procedure);
+    public Procedure.Builder startRegisteringProcedure( String procedure );
     
 
     /**
-     * Returns an observable that allows to subscribe on the given topic.<br>
-     * The actual subscription will only be made after subscribe() was called
-     * on it.<br>
-     * Received publications will be pushed to the Subscriber via it's
-     * onNext method.<br>
+     * Begins subscribing to a topic</br>
+     * To actually subscribe, call something like
+     * <pre>
+     * wampclient.startSubscribing( topic )
+     *           .onError( someLambda )
+     *           .onFinished( someLambda )
+     *           .onEvent( someLambda )
+     *           .subscribe()
+     * </pre>
+     * Received publications will be pushed to the client via the method passed
+     * in onEvent.<br>
+     * To unsubscribe from a topic, call unsubscribe() on the Subscription object
+     * returned from Subscribption.Builder.subscribe()<br>
      * The client can unsubscribe from the topic by calling unsubscribe() on
      * it's Subscription.<br>
-     * If the connection closes onCompleted will be called.<br>
-     * In case of errors during subscription onError will be called.
      * @param topic The topic to subscribe on.<br>
      * Must be valid WAMP URI.
-     * @return An observable that can be used to subscribe on the topic.
+     * @return A Subscription.Builder that can be used to actually subscribe to a topic.
      */
-    public Observable<PubSubData> makeSubscription(final String topic);
+    public Subscription.Builder startSubscribing( String topic );
     
 
     /**

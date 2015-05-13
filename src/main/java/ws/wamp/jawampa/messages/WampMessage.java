@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
@@ -40,6 +42,10 @@ public abstract class WampMessage {
 
     public abstract void onMessage( MessageHandler messageHandler );
 
+    @Override
+    public String toString() {
+        return new ReflectionToStringBuilder( this ).build();
+    }
     // Register all possible message types
 
     /**

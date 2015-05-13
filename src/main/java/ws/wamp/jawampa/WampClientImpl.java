@@ -10,7 +10,6 @@ import rx.Observable;
 import rx.functions.Action1;
 import rx.subjects.AsyncSubject;
 import rx.subjects.BehaviorSubject;
-import rx.subjects.PublishSubject;
 import ws.wamp.jawampa.auth.client.ClientSideAuthentication;
 import ws.wamp.jawampa.connectionStates.Disconnected;
 import ws.wamp.jawampa.connectionStates.HasConnectionState;
@@ -23,6 +22,8 @@ import ws.wamp.jawampa.messages.WampMessage;
 import ws.wamp.jawampa.messages.handling.LoggingMessageHandler;
 import ws.wamp.jawampa.messages.handling.MessageHandler;
 import ws.wamp.jawampa.messages.handling.WampPeerBuilder;
+import ws.wamp.jawampa.registrations.Procedure;
+import ws.wamp.jawampa.registrations.Subscription;
 import ws.wamp.jawampa.roles.Callee;
 import ws.wamp.jawampa.roles.Caller;
 import ws.wamp.jawampa.roles.ClientConnection;
@@ -53,6 +54,8 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     private final Subscriber subscriber;
     private final ClientConnection clientConnection;
 
+    private final Set<WampRoles> roles;
+
     private final BehaviorSubject<Status> externalStatusObservable;
     private InternalConnectionState connectionState;
 
@@ -70,6 +73,8 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
         caller = roles.contains( WampRoles.Caller ) ? new Caller( this ) : null;
         subscriber = roles.contains( WampRoles.Subscriber ) ? new Subscriber( this ) : null;
         clientConnection = new ClientConnection( this, realm, roles, authId, authMethods, mapper, this );
+
+        this.roles = roles;
 
         preWelcomeMessageHandler = new LoggingMessageHandler(
                 new WampPeerBuilder().withHandshakingClient( clientConnection )
@@ -113,12 +118,11 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     }
 
     @Override
-    public Observable<Void> publish( String topic, Object... args ) {
-        return publish(topic, buildArgumentsArray(args), null);
-    }
-
-    @Override
     public Observable<Void> publish( final String topic, final ArrayNode arguments, final ObjectNode argumentsKw ) {
+        if ( !roles.contains( WampRoles.Publisher ) ) {
+            throw new IllegalStateException( "You are not a publisher!" );
+        }
+
         final AsyncSubject<Void> resultSubject = AsyncSubject.create();
 
         connection.executor().execute( new Runnable() {
@@ -132,36 +136,29 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
     }
 
     @Override
-    public Observable<Request> registerProcedure( final String procedure ) {
-        // FIXME: This is racy. The first RPC call might arrive before the client has subscribed on the Observable returned.
-        final PublishSubject<Request> resultSubject = PublishSubject.create();
+    public Procedure.Builder startRegisteringProcedure( final String procedure ) {
+        if ( !roles.contains( WampRoles.Callee ) ) {
+            throw new IllegalStateException( "You are not a callee!" );
+        }
 
-        connection.executor().execute( new Runnable() {
-            @Override
-            public void run() {
-                callee.register( procedure, resultSubject );
-            }
-        });
-
-        return resultSubject;
+        return new Procedure.Builder( connection.executor(), callee, procedure );
     }
 
     @Override
-    public Observable<PubSubData> makeSubscription( final String topic ) {
-        final PublishSubject<PubSubData> resultSubject = PublishSubject.create();
+    public Subscription.Builder startSubscribing( final String topic ) {
+        if ( !roles.contains( WampRoles.Subscriber ) ) {
+            throw new IllegalStateException( "You are not a subscriber!" );
+        }
 
-        connection.executor().execute( new Runnable() {
-            @Override
-            public void run() {
-                subscriber.subscribe( topic, resultSubject );
-            }
-        });
-
-        return resultSubject;
+        return new Subscription.Builder( connection.executor(), subscriber, topic );
     }
 
     @Override
     public Observable<Reply> call( final String procedure, final ArrayNode arguments, final ObjectNode argumentsKw ) {
+        if ( !roles.contains( WampRoles.Caller ) ) {
+            throw new IllegalStateException( "You are not a caller!" );
+        }
+
         final AsyncSubject<Reply> resultSubject = AsyncSubject.create();
 
         connection.executor().execute( new Runnable() {

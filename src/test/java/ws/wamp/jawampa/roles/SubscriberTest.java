@@ -193,4 +193,24 @@ public class SubscriberTest {
         verify( publicationObserver ).onCompleted();
         verify( publicationObserver, never()).onError( any( Throwable.class ) );
     }
+
+    @Test
+    public void testUnsubscribeBeforeSubscribedMessage() {
+        subject.subscribe( topic, resultSubject );
+        subject.unsubscribe( topic, unsubscribeSubject );
+        subject.onSubscribed( new SubscribedMessage( REQUEST_ID, SUBSCRIPTION_ID ) );
+
+        ArgumentMatcher<WampMessage> messageMatcher = new ArgumentMatcher<WampMessage>() {
+            @Override
+            public boolean matches( Object argument ) {
+                UnsubscribeMessage message = (UnsubscribeMessage)argument;
+                if ( !message.requestId.equals( UN_REQUEST_ID ) ) return false;
+                if ( !message.subscriptionId.equals( SUBSCRIPTION_ID ) ) return false;
+                return true;
+            }
+        };
+        InOrder inOrder = inOrder( baseClient );
+        inOrder.verify( baseClient ).scheduleMessageToRouter( any( WampMessage.class ) );
+        inOrder.verify( baseClient ).scheduleMessageToRouter( argThat( messageMatcher ) );
+    }
 }
