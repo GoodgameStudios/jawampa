@@ -1,7 +1,9 @@
 package ws.wamp.jawampa.roles;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
@@ -32,6 +34,14 @@ public class Subscriber extends BaseMessageHandler {
     private final Map<SubscriptionId, PublishSubject<PubSubData>> subscriptionId2publishSubject;
     private final BidiMap<String, SubscriptionId> topic2subscriptionId;
 
+    private final Set<String> pendingSubscriptions;
+    /*
+     * An entry for a subscription is in this set, iff
+     * - unsubscribe was called
+     * - neither SUBSCRIBED nor ERROR was yet received in response to SUBSCRIBE
+     */
+    private final Map<String, PublishSubject<Void>> earlyUnsubscriptions;
+
     public Subscriber( BaseClient baseClient ) {
         this.baseClient = baseClient;
 
@@ -40,6 +50,9 @@ public class Subscriber extends BaseMessageHandler {
 
         subscriptionId2publishSubject = new HashMap<SubscriptionId, PublishSubject<PubSubData>>();
         topic2subscriptionId = new DualHashBidiMap<String, SubscriptionId>();
+
+        pendingSubscriptions = new HashSet<String>();
+        earlyUnsubscriptions = new HashMap<String, PublishSubject<Void>>();
     }
 
     public void subscribe( final String topic, final PublishSubject<PubSubData> resultSubject ) {
@@ -49,6 +62,10 @@ public class Subscriber extends BaseMessageHandler {
             public void onNext( SubscriptionId subscriptionId ) {
                 subscriptionId2publishSubject.put( subscriptionId, resultSubject );
                 topic2subscriptionId.put( topic, subscriptionId );
+                pendingSubscriptions.remove( topic );
+                if ( earlyUnsubscriptions.containsKey( topic ) ) {
+                    doUnsubscribe( topic, earlyUnsubscriptions.get( topic ) );
+                }
             }
 
             @Override
@@ -58,9 +75,12 @@ public class Subscriber extends BaseMessageHandler {
 
             @Override
             public void onError( Throwable e ) {
+                pendingSubscriptions.remove( topic );
+                earlyUnsubscriptions.remove( topic );
                 resultSubject.onError( e );
             }
         } );
+        pendingSubscriptions.add( topic );
         registrationTracker.sendRequest( registrationSubject, new MessageFactory() {
             @Override
             public WampMessage fromRequestId( RequestId requestId ) {
@@ -90,7 +110,7 @@ public class Subscriber extends BaseMessageHandler {
         }
     }
 
-    public void unsubscribe( final String topic, final PublishSubject<Void> resultSubject ) {
+    private void doUnsubscribe( final String topic, final PublishSubject<Void> resultSubject ) {
         AsyncSubject<Void> unregistrationSubject = AsyncSubject.create();
         unregistrationSubject.subscribe( new Observer<Void>() {
             @Override
@@ -122,6 +142,16 @@ public class Subscriber extends BaseMessageHandler {
                                                topic2subscriptionId.get( topic ) );
             }
         } );
+        earlyUnsubscriptions.remove( topic );
+    }
+
+    public void unsubscribe( String topic, PublishSubject<Void> resultSubject ) {
+        if ( pendingSubscriptions.contains( topic ) ) {
+            // unsubscribe was called before SUBSCRIBED was received
+            earlyUnsubscriptions.put( topic, resultSubject );
+        } else {
+            doUnsubscribe( topic, resultSubject );
+        }
     }
 
     @Override

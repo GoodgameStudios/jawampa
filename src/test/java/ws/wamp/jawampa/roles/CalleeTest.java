@@ -218,4 +218,24 @@ public class CalleeTest {
         verify( callObserver ).onCompleted();
         verify( callObserver, never()).onError( any( Throwable.class ) );
     }
+
+    @Test
+    public void testUnregisterBeforeRegisteredMessage() {
+        subject.register( procedure, callSubject );
+        subject.unregister( procedure, unsubscribeSubject );
+        subject.onRegistered( new RegisteredMessage( REQUEST_ID, REGISTRATION_ID ) );
+
+        ArgumentMatcher<WampMessage> messageMatcher = new ArgumentMatcher<WampMessage>() {
+            @Override
+            public boolean matches( Object argument ) {
+                UnregisterMessage message = (UnregisterMessage)argument;
+                if ( !message.requestId.equals( REQUEST_ID2 ) ) return false;
+                if ( !message.registrationId.equals( REGISTRATION_ID ) ) return false;
+                return true;
+            }
+        };
+        InOrder inOrder = inOrder( baseClient );
+        inOrder.verify( baseClient ).scheduleMessageToRouter( any( WampMessage.class ) );
+        inOrder.verify( baseClient ).scheduleMessageToRouter( argThat( messageMatcher ) );
+}
 }
