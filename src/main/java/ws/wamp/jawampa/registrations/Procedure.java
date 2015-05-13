@@ -21,7 +21,7 @@ public class Procedure {
         this.procedure = Objects.requireNonNull( procedure );
     }
 
-    public void unsubscribe() {
+    public void unregister() {
         final PublishSubject<Void> resultSubject = PublishSubject.create();
 
         executor.execute( new Runnable() {
