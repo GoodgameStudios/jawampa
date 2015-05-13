@@ -90,7 +90,9 @@ public class NettyConnection {
     }
 
     public void sendMessage( final WampMessage msg ) {
-        log.debug( "Outgoing message: " + msg );
+        if ( log.isDebugEnabled() ) {
+            log.debug( "Outgoing message: " + msg );
+        }
         channel.writeAndFlush( msg );
     }
 
@@ -105,7 +107,9 @@ public class NettyConnection {
     private class MySessionHandler extends SimpleChannelInboundHandler<WampMessage> {
         @Override
         protected void channelRead0( ChannelHandlerContext ctx, WampMessage msg ) throws Exception {
-            log.debug( "Incoming message: " + msg );
+            if ( log.isDebugEnabled() ) {
+                log.debug( "Incoming message: " + msg );
+            }
             messageObservable.onNext( msg );
         }
 
