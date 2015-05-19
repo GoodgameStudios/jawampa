@@ -42,13 +42,13 @@ import ws.wamp.jawampa.transport.WampClientChannelFactoryResolver;
 public class WampClientBuilder {
     private static final Logger log = LoggerFactory.getLogger( WampClientBuilder.class );
 
-    String uri;
-    String realm;
-    SslContext sslContext;
-    int nrReconnects = 0;
-    int reconnectInterval = DEFAULT_RECONNECT_INTERVAL;
-    boolean closeOnErrors = true;
-    Set<WampRoles> roles = new HashSet<WampRoles>();
+    private String uri;
+    private String realm;
+    private SslContext sslContext;
+    private int nrReconnects = 0;
+    private int reconnectInterval = DEFAULT_RECONNECT_INTERVAL;
+    private boolean closeOnErrors = true;
+    private Set<WampRoles> roles = new HashSet<WampRoles>();
     private String authId = null;
     private List<ClientSideAuthentication> authMethods = new ArrayList<ClientSideAuthentication>();
     
