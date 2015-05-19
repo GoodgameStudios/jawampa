@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2014 Matthias Einwag
  *
@@ -16,11 +17,9 @@
 
 package ws.wamp.jawampa;
 
-import io.netty.channel.Channel;
-
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-
+import ws.wamp.jawampa.ids.RequestId;
 import ws.wamp.jawampa.internal.UriValidator;
+import ws.wamp.jawampa.io.BaseClient;
 import ws.wamp.jawampa.messages.ErrorMessage;
 import ws.wamp.jawampa.messages.InvocationMessage;
 import ws.wamp.jawampa.messages.YieldMessage;
@@ -36,33 +35,22 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * order to send a positive or negative response back to the caller.
  */
 public class Request {
-    
-    final WampClient client;
-    final Channel channel;
-    final long requestId;
-    final ArrayNode arguments;
-    final ObjectNode keywordArguments;
-    
-    volatile int replySent = 0;
-    
-    private static final AtomicIntegerFieldUpdater<Request> replySentUpdater;
-    static {
-        replySentUpdater = AtomicIntegerFieldUpdater.newUpdater(Request.class, "replySent");
-    }
-    
+    private final BaseClient baseClient;
+    private final RequestId requestId;
+
+    private final ArrayNode arguments;
+    private final ObjectNode keywordArguments;
+
     public ArrayNode arguments() {
         return arguments;
     }
-    
+
     public ObjectNode keywordArguments() {
         return keywordArguments;
     }
 
-    public Request(WampClient client, Channel channel, 
-                   long requestId, ArrayNode arguments, ObjectNode keywordArguments)
-    {
-        this.client = client;
-        this.channel = channel;
+    public Request( BaseClient baseClient, RequestId requestId, ArrayNode arguments, ObjectNode keywordArguments ) {
+        this.baseClient = baseClient;
         this.requestId = requestId;
         this.arguments = arguments;
         this.keywordArguments = keywordArguments;
@@ -75,25 +63,9 @@ public class Request {
      * @param error The ApplicationError that shoul be serialized and sent
      * as an exceptional response. Must not be null.
      */
-    public void replyError(ApplicationError error) throws ApplicationError{
-        if (error == null || error.uri == null) throw new NullPointerException();
-        replyError(error.uri, error.args, error.kwArgs);
-    }
-    
-    /**
-     * Send an error message in response to the request.<br>
-     * This version of the function will use Jacksons object mapping
-     * capabilities to transform the argument objects in a JSON argument
-     * array which will be sent as the positional arguments of the call.
-     * If keyword arguments are needed then this function can not be used.<br>
-     * If this is called more than once then the following invocations will
-     * have no effect. Respones will be only sent once.
-     * @param errorUri The error message that should be sent. This must be a
-     * valid WAMP Uri.
-     * @param args The positional arguments to sent in the response
-     */
-    public void replyError(String errorUri, Object... args) throws ApplicationError{
-        replyError(errorUri, client.buildArgumentsArray(args), null);
+    public void replyError( ApplicationError error ) throws ApplicationError {
+        if ( error == null || error.uri() == null ) throw new NullPointerException();
+        replyError( error.uri(), error.arguments(), error.keywordArguments() );
     }
     
     /**
@@ -105,19 +77,15 @@ public class Request {
      * @param arguments The positional arguments to sent in the response
      * @param keywordArguments The keyword arguments to sent in the response
      */
-    public void replyError(String errorUri, ArrayNode arguments, ObjectNode keywordArguments) throws ApplicationError {
-        int replyWasSent = replySentUpdater.getAndSet(this, 1);
-        if (replyWasSent == 1) return;
-        
-        UriValidator.validate(errorUri);
-        
-        final ErrorMessage msg = new ErrorMessage(InvocationMessage.ID, 
-                                                  requestId, null, errorUri,
-                                                  arguments, keywordArguments);
+    public void replyError( String errorUri, ArrayNode arguments, ObjectNode keywordArguments ) throws ApplicationError {
+        UriValidator.validate(errorUri, false);
 
-        client.scheduleMessage( msg );
+        final ErrorMessage msg = new ErrorMessage( InvocationMessage.ID, 
+                                                   requestId, null, errorUri,
+                                                   arguments, keywordArguments );
+        baseClient.scheduleMessageToRouter( msg );
     }
-    
+
     /**
      * Send a normal response to the request.<br>
      * If this is called more than once then the following invocations will
@@ -125,29 +93,9 @@ public class Request {
      * @param arguments The positional arguments to sent in the response
      * @param keywordArguments The keyword arguments to sent in the response
      */
-    public void reply(ArrayNode arguments, ObjectNode keywordArguments) {
-        int replyWasSent = replySentUpdater.getAndSet(this, 1);
-        if (replyWasSent == 1) return;
-        
-        final YieldMessage msg = new YieldMessage(requestId, null,
-                                                  arguments, keywordArguments);
-
-        client.scheduleMessage( msg );
+    public void reply( ArrayNode arguments, ObjectNode keywordArguments ) {
+        final YieldMessage msg = new YieldMessage( requestId, null,
+                                                   arguments, keywordArguments );
+        baseClient.scheduleMessageToRouter( msg );
     }
-    
-    /**
-     * Send a normal response to the request.<br>
-     * This version of the function will use Jacksons object mapping
-     * capabilities to transform the argument objects in a JSON argument
-     * array which will be sent as the positional arguments of the call.
-     * If keyword arguments are needed then this function can not be used.<br>
-     * If this is called more than once then the following invocations will
-     * have no effect. Respones will be only sent once.
-     * @param arguments The positional arguments to sent in the response
-     * @param keywordArguments The keyword arguments to sent in the response
-     */
-    public void reply(Object... args) {
-        reply(client.buildArgumentsArray(args), null);
-    }
-
 }

@@ -1,16 +1,15 @@
 package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class ChallengeMessage extends WampMessage {
-    public final static int ID = 4;
+    public static final MessageCode ID = MessageCode.CHALLENGE;
 
     public final String authMethod;
     public final ObjectNode extra;
@@ -21,12 +20,11 @@ public class ChallengeMessage extends WampMessage {
     }
 
     @Override
-    public JsonNode toObjectArray( ObjectMapper mapper ) throws WampError {
-        ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
-        messageNode.add(authMethod);
-        messageNode.add(extra);
-        return messageNode;
+    public ArrayNode toObjectArray( ObjectMapper mapper ) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( authMethod )
+                .add( extra )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {
@@ -43,7 +41,8 @@ public class ChallengeMessage extends WampMessage {
         }
     }
 
-    public void onMessageBeforeWelcome( WampClient client ) {
-        client.onChallengeReceived( this );
+    @Override
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onChallenge( this );
     }
 }

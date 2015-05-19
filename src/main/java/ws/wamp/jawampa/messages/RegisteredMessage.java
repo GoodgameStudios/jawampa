@@ -2,18 +2,33 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.ids.RegistrationId;
+import ws.wamp.jawampa.ids.RequestId;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 /**
  * Acknowledge sent by a Dealer to a Callee for successful registration.
  * [REGISTERED, REGISTER.Request|id, Registration|id]
  */
-public class RegisteredMessage extends RequestedMessage{
-    public final static int ID = 65;
+public class RegisteredMessage extends WampMessage {
+    public static final MessageCode ID = MessageCode.REGISTERED;
 
-    public RegisteredMessage(long requestId, long registrationId) {
-        super(ID, requestId, registrationId);
+    public final RequestId requestId;
+    public final RegistrationId registrationId;
+
+    public RegisteredMessage(RequestId requestId, RegistrationId registrationId) {
+        this.requestId = requestId;
+        this.registrationId = registrationId;
+    }
+
+    public ArrayNode toObjectArray(ObjectMapper mapper) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( requestId )
+                .add( registrationId )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {
@@ -27,7 +42,12 @@ public class RegisteredMessage extends RequestedMessage{
             long requestId = messageNode.get(1).asLong();
             long registrationId = messageNode.get(2).asLong();
 
-            return new RegisteredMessage(requestId, registrationId);
+            return new RegisteredMessage(RequestId.of(requestId), RegistrationId.of(registrationId));
         }
+    }
+
+    @Override
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onRegistered( this );
     }
 }

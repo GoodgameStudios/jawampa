@@ -7,9 +7,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +32,7 @@ public abstract class WampMessage {
                 || !messageNode.get(0).canConvertToInt())
             throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-        int messageType = messageNode.get(0).asInt();
+        MessageCode messageType = MessageCode.of( messageNode.get(0).asInt() );
         WampMessageFactory factory = messageFactories.get(messageType);
         if (factory == null)
             return null; // We can't find the message type, so we skip it
@@ -38,25 +40,21 @@ public abstract class WampMessage {
         return factory.fromObjectArray(messageNode);
     }
 
-    public void onMessageBeforeWelcome( WampClient client ) {
-        logger.warn( "Received unexpected message before welcome message" + this );
-        client.onProtocolError();
-    }
+    public abstract void onMessage( MessageHandler messageHandler );
 
-    public void onMessage( WampClient client ) {
-        logger.warn( "Received unknown message" + this );
-        client.onProtocolError();
+    @Override
+    public String toString() {
+        return new ReflectionToStringBuilder( this ).build();
     }
-
     // Register all possible message types
 
     /**
      * A map which associates all message types which factories which can
      * recreate them from received data.
      */
-    final static Map<Integer, WampMessageFactory> messageFactories;
+    final static Map<MessageCode, WampMessageFactory> messageFactories;
     static {
-        HashMap<Integer, WampMessageFactory> map = new HashMap<Integer, WampMessageFactory>();
+        HashMap<MessageCode, WampMessageFactory> map = new HashMap<MessageCode, WampMessageFactory>();
         map.put(HelloMessage.ID, new HelloMessage.Factory());
         map.put(WelcomeMessage.ID, new WelcomeMessage.Factory());
         map.put(AbortMessage.ID, new AbortMessage.Factory());

@@ -2,14 +2,14 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class AuthenticateMessage extends WampMessage {
-    public final static int ID = 5;
+    public static final MessageCode ID = MessageCode.AUTHENTICATE;
 
     public final String signature;
     public final ObjectNode extra;
@@ -20,12 +20,11 @@ public class AuthenticateMessage extends WampMessage {
     }
 
     @Override
-    public JsonNode toObjectArray( ObjectMapper mapper ) throws WampError {
-        ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
-        messageNode.add(signature);
-        messageNode.add(extra);
-        return messageNode;
+    public ArrayNode toObjectArray( ObjectMapper mapper ) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( signature )
+                .add( extra )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {
@@ -40,5 +39,10 @@ public class AuthenticateMessage extends WampMessage {
             ObjectNode extra = (ObjectNode) messageNode.get(2);
             return new AuthenticateMessage(signature, extra);
         }
+    }
+
+    @Override
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onAuthenticate( this );
     }
 }

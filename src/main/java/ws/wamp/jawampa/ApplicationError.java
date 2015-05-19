@@ -27,9 +27,9 @@ public class ApplicationError extends WampError {
     
     private static final long serialVersionUID = 7520664664586119266L;
     
-    final String uri;
-    final ArrayNode args;
-    final ObjectNode kwArgs;
+    private final String uri;
+    private final ArrayNode args;
+    private final ObjectNode kwArgs;
     
     public String uri() {
         return uri;

@@ -1,10 +1,9 @@
 package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -14,7 +13,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * expected. [ABORT, Details|dict, Reason|uri]
  */
 public class AbortMessage extends WampMessage {
-    public final static int ID = 3;
+    public static final MessageCode ID = MessageCode.ABORT;
+
     public final ObjectNode details;
     public final String reason;
 
@@ -23,14 +23,11 @@ public class AbortMessage extends WampMessage {
         this.reason = reason;
     }
 
-    public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-        ArrayNode messageNode = mapper.createArrayNode();
-        if (details != null)
-            messageNode.add(details);
-        else
-            messageNode.add(mapper.createObjectNode());
-        messageNode.add(reason.toString());
-        return messageNode;
+    public ArrayNode toObjectArray(ObjectMapper mapper) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( details )
+                .add( reason )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {
@@ -48,13 +45,7 @@ public class AbortMessage extends WampMessage {
     }
 
     @Override
-    public void onMessageBeforeWelcome( WampClient client ) {
-        // The remote doesn't want us to connect :(
-        client.onSessionError(new ApplicationError(reason));
-    }
-
-    @Override
-    public void onMessage( WampClient client ) {
-        client.onProtocolError();
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onAbort( this );
     }
 }

@@ -1,11 +1,10 @@
 package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.Reply;
-import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.ids.RequestId;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -17,13 +16,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
  */
 public class ResultMessage extends WampMessage {
-    public final static int ID = 50;
-    public final long requestId;
+    public static final MessageCode ID = MessageCode.RESULT;
+
+    public final RequestId requestId;
     public final ObjectNode details;
     public final ArrayNode arguments;
     public final ObjectNode argumentsKw;
 
-    public ResultMessage(long requestId, ObjectNode details,
+    public ResultMessage(RequestId requestId, ObjectNode details,
             ArrayNode arguments, ObjectNode argumentsKw) {
         this.requestId = requestId;
         this.details = details;
@@ -31,21 +31,13 @@ public class ResultMessage extends WampMessage {
         this.argumentsKw = argumentsKw;
     }
 
-    public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-        ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
-        messageNode.add(requestId);
-        if (details != null)
-            messageNode.add(details);
-        else
-            messageNode.add(mapper.createObjectNode());
-        if (arguments != null)
-            messageNode.add(arguments);
-        else if (argumentsKw != null)
-            messageNode.add(mapper.createArrayNode());
-        if (argumentsKw != null)
-            messageNode.add(argumentsKw);
-        return messageNode;
+    public ArrayNode toObjectArray(ObjectMapper mapper) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( requestId )
+                .add( details )
+                .add( arguments )
+                .add( argumentsKw )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {
@@ -72,13 +64,13 @@ public class ResultMessage extends WampMessage {
                 }
             }
 
-            return new ResultMessage(requestId, details, arguments,
+            return new ResultMessage(RequestId.of( requestId ), details, arguments,
                     argumentsKw);
         }
     }
 
     @Override
-    public void onMessage( WampClient client ) {
-        client.onSuccessfulReply( requestId, CallMessage.ID, new Reply(arguments, argumentsKw) );
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onResult( this );
     }
 }

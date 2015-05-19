@@ -1,10 +1,10 @@
 package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.ids.RequestId;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -18,15 +18,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * ArgumentsKw|dict]
  */
 public class ErrorMessage extends WampMessage {
-    public final static int ID = 8;
-    public final int requestType;
-    public final long requestId;
+    public static final MessageCode ID = MessageCode.ERROR;
+
+    public final MessageCode requestType;
+    public final RequestId requestId;
     public final ObjectNode details;
     public final String error;
     public final ArrayNode arguments;
     public final ObjectNode argumentsKw;
 
-    public ErrorMessage(int requestType, long requestId,
+    public ErrorMessage(MessageCode requestType, RequestId requestId,
             ObjectNode details, String error, ArrayNode arguments,
             ObjectNode argumentsKw) {
         this.requestType = requestType;
@@ -37,23 +38,15 @@ public class ErrorMessage extends WampMessage {
         this.argumentsKw = argumentsKw;
     }
 
-    public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-        ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
-        messageNode.add(requestType);
-        messageNode.add(requestId);
-        if (details != null)
-            messageNode.add(details);
-        else
-            messageNode.add(mapper.createObjectNode());
-        messageNode.add(error.toString());
-        if (arguments != null)
-            messageNode.add(arguments);
-        else if (argumentsKw != null)
-            messageNode.add(mapper.createArrayNode());
-        if (argumentsKw != null)
-            messageNode.add(argumentsKw);
-        return messageNode;
+    public ArrayNode toObjectArray(ObjectMapper mapper) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( requestType )
+                .add( requestId )
+                .add( details )
+                .add( error )
+                .add( arguments )
+                .add( argumentsKw )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {
@@ -66,8 +59,8 @@ public class ErrorMessage extends WampMessage {
                     || !messageNode.get(4).isTextual())
                 throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-            int requestType = messageNode.get(1).asInt();
-            long requestId = messageNode.get(2).asLong();
+            MessageCode requestType = MessageCode.of( messageNode.get(1).asInt() );
+            RequestId requestId = RequestId.of( messageNode.get(2).asLong() );
             ObjectNode details = (ObjectNode) messageNode.get(3);
             String error = messageNode.get(4).asText();
             ArrayNode arguments = null;
@@ -89,15 +82,85 @@ public class ErrorMessage extends WampMessage {
         }
     }
 
+
     @Override
-    public void onMessage( WampClient client ) {
-        if (requestType == CallMessage.ID
-                || requestType == SubscribeMessage.ID
-                || requestType == UnsubscribeMessage.ID
-                || requestType == PublishMessage.ID
-                || requestType == RegisterMessage.ID
-                || requestType == UnregisterMessage.ID) {
-            client.onErrorReply( requestId, requestType, new ApplicationError(error, arguments, argumentsKw) );
+    public void onMessage( MessageHandler messageHandler ) {
+        switch ( requestType ) {
+        case SUBSCRIBE:
+            messageHandler.onSubscribeError( this );
+            break;
+        case UNSUBSCRIBE:
+            messageHandler.onUnsubscribeError( this );
+            break;
+        case PUBLISH:
+            messageHandler.onPublishError( this );
+            break;
+        case REGISTER:
+            messageHandler.onRegisterError( this );
+            break;
+        case UNREGISTER:
+            messageHandler.onUnregisterError( this );
+            break;
+        case INVOCATION:
+            messageHandler.onInvocationError( this );
+            break;
+        case CALL:
+            messageHandler.onCallError( this );
+            break;
+        default:
+            messageHandler.onError( this );
         }
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ( ( arguments == null ) ? 0 : arguments.hashCode() );
+        result = prime * result + ( ( argumentsKw == null ) ? 0 : argumentsKw.hashCode() );
+        result = prime * result + ( ( details == null ) ? 0 : details.hashCode() );
+        result = prime * result + ( ( error == null ) ? 0 : error.hashCode() );
+        result = prime * result + ( ( requestId == null ) ? 0 : requestId.hashCode() );
+        result = prime * result + ( ( requestType == null ) ? 0 : requestType.hashCode() );
+        return result;
+    }
+
+    @Override
+    public boolean equals( Object obj ) {
+        if ( this == obj )
+            return true;
+        if ( obj == null )
+            return false;
+        if ( getClass() != obj.getClass() )
+            return false;
+        ErrorMessage other = (ErrorMessage)obj;
+        if ( arguments == null ) {
+            if ( other.arguments != null )
+                return false;
+        } else if ( !arguments.equals( other.arguments ) )
+            return false;
+        if ( argumentsKw == null ) {
+            if ( other.argumentsKw != null )
+                return false;
+        } else if ( !argumentsKw.equals( other.argumentsKw ) )
+            return false;
+        if ( details == null ) {
+            if ( other.details != null )
+                return false;
+        } else if ( !details.equals( other.details ) )
+            return false;
+        if ( error == null ) {
+            if ( other.error != null )
+                return false;
+        } else if ( !error.equals( other.error ) )
+            return false;
+        if ( requestId == null ) {
+            if ( other.requestId != null )
+                return false;
+        } else if ( !requestId.equals( other.requestId ) )
+            return false;
+        if ( requestType != other.requestType )
+            return false;
+        return true;
     }
 }

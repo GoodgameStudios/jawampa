@@ -2,8 +2,9 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.ids.RequestId;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -15,13 +16,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * Options|dict, Arguments|list, ArgumentsKw|dict]
  */
 public class YieldMessage extends WampMessage {
-    public final static int ID = 70;
-    public final long requestId;
+    public static final MessageCode ID = MessageCode.YIELD;
+
+    public final RequestId requestId;
     public final ObjectNode options;
     public final ArrayNode arguments;
     public final ObjectNode argumentsKw;
 
-    public YieldMessage(long requestId, ObjectNode options,
+    public YieldMessage(RequestId requestId, ObjectNode options,
             ArrayNode arguments, ObjectNode argumentsKw) {
         this.requestId = requestId;
         this.options = options;
@@ -29,21 +31,13 @@ public class YieldMessage extends WampMessage {
         this.argumentsKw = argumentsKw;
     }
 
-    public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-        ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
-        messageNode.add(requestId);
-        if (options != null)
-            messageNode.add(options);
-        else
-            messageNode.add(mapper.createObjectNode());
-        if (arguments != null)
-            messageNode.add(arguments);
-        else if (argumentsKw != null)
-            messageNode.add(mapper.createArrayNode());
-        if (argumentsKw != null)
-            messageNode.add(argumentsKw);
-        return messageNode;
+    public ArrayNode toObjectArray(ObjectMapper mapper) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( requestId )
+                .add( options )
+                .add( arguments )
+                .add( argumentsKw )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {
@@ -70,8 +64,13 @@ public class YieldMessage extends WampMessage {
                 }
             }
 
-            return new YieldMessage(requestId, options, arguments,
+            return new YieldMessage(RequestId.of( requestId ), options, arguments,
                     argumentsKw);
         }
+    }
+
+    @Override
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onYield( this );
     }
 }

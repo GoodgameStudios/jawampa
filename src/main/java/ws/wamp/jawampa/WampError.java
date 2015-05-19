@@ -20,7 +20,7 @@ package ws.wamp.jawampa;
  * WampError is the base class for all exceptions that are used
  * in this WAMP implementation.
  */
-public class WampError extends Exception {
+public class WampError extends RuntimeException {
 
     private static final long serialVersionUID = -6764352292811116268L;
 

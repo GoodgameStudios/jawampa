@@ -1,10 +1,9 @@
 package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -14,7 +13,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * by the receiving Peer. Format: [GOODBYE, Details|dict, Reason|uri]
  */
 public class GoodbyeMessage extends WampMessage {
-    public final static int ID = 6;
+    public static final MessageCode ID = MessageCode.GOODBYE;
+
     public final ObjectNode details;
     public final String reason;
 
@@ -23,15 +23,11 @@ public class GoodbyeMessage extends WampMessage {
         this.reason = reason;
     }
 
-    public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-        ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
-        if (details != null)
-            messageNode.add(details);
-        else
-            messageNode.add(mapper.createObjectNode());
-        messageNode.add(reason.toString());
-        return messageNode;
+    public ArrayNode toObjectArray(ObjectMapper mapper) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( details )
+                .add( reason )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {
@@ -49,11 +45,7 @@ public class GoodbyeMessage extends WampMessage {
     }
 
     @Override
-    public void onMessage( WampClient client ) {
-        // Reply the goodbye
-        client.scheduleMessage(new GoodbyeMessage(null, ApplicationError.GOODBYE_AND_OUT));
-        // We could also use the reason from the msg, but this would be harder
-        // to determinate from a "real" error
-        client.onSessionError(new ApplicationError(ApplicationError.GOODBYE_AND_OUT));
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onGoodbye( this );
     }
 }

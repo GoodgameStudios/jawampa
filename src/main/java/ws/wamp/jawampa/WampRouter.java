@@ -37,6 +37,11 @@ import java.util.concurrent.ThreadFactory;
 
 import rx.Scheduler;
 import rx.schedulers.Schedulers;
+import ws.wamp.jawampa.ids.PublicationId;
+import ws.wamp.jawampa.ids.RegistrationId;
+import ws.wamp.jawampa.ids.RequestId;
+import ws.wamp.jawampa.ids.SessionId;
+import ws.wamp.jawampa.ids.SubscriptionId;
 import ws.wamp.jawampa.internal.IdGenerator;
 import ws.wamp.jawampa.internal.IdValidator;
 import ws.wamp.jawampa.internal.RealmConfig;
@@ -123,7 +128,7 @@ public class WampRouter {
                     // that the proc has gone away
                     for (Invocation invoc : proc.pendingCalls) {
                         if (invoc.caller.state != RouterHandlerState.Open) continue;
-                        ErrorMessage errMsg = new ErrorMessage(CallMessage.ID, invoc.callRequestId, 
+                        ErrorMessage errMsg = new ErrorMessage(CallMessage.ID, RequestId.of( invoc.callRequestId ), 
                             null, ApplicationError.NO_SUCH_PROCEDURE, null, null);
                         invoc.caller.ctx.writeAndFlush(errMsg);
                     }
@@ -400,7 +405,7 @@ public class WampRouter {
             
             // Everything checked, we can forward the call to the provider
             Invocation invoc = new Invocation();
-            invoc.callRequestId = call.requestId;
+            invoc.callRequestId = call.requestId.getValue();
             invoc.caller = handler;
             invoc.procedure = proc;
             invoc.invocationRequestId = IdGenerator.newLinearId(proc.provider.lastUsedId,
@@ -413,8 +418,8 @@ public class WampRouter {
             proc.pendingCalls.add(invoc);
 
             // And send it to the provider
-            InvocationMessage imsg = new InvocationMessage(invoc.invocationRequestId,
-                proc.registrationId, null, call.arguments, call.argumentsKw);
+            InvocationMessage imsg = new InvocationMessage(RequestId.of( invoc.invocationRequestId ),
+                RegistrationId.of( proc.registrationId ), null, call.arguments, call.argumentsKw);
             proc.provider.ctx.writeAndFlush(imsg);
         } else if (msg instanceof YieldMessage) {
             // The clients sends as the result of an RPC
@@ -428,7 +433,7 @@ public class WampRouter {
             handler.pendingInvocations.remove(yield.requestId);
             invoc.procedure.pendingCalls.remove(invoc);
             // Send the result to the original caller
-            ResultMessage result = new ResultMessage(invoc.callRequestId, null, yield.arguments, yield.argumentsKw);
+            ResultMessage result = new ResultMessage(RequestId.of( invoc.callRequestId ), null, yield.arguments, yield.argumentsKw);
             invoc.caller.ctx.writeAndFlush(result);
         } else if (msg instanceof ErrorMessage) {
             ErrorMessage err = (ErrorMessage) msg;
@@ -452,7 +457,7 @@ public class WampRouter {
                 invoc.procedure.pendingCalls.remove(invoc);
                 
                 // Send the result to the original caller
-                ErrorMessage fwdError = new ErrorMessage(CallMessage.ID, invoc.callRequestId, 
+                ErrorMessage fwdError = new ErrorMessage(CallMessage.ID, RequestId.of( invoc.callRequestId ), 
                     null, err.error, err.arguments, err.argumentsKw);
                 invoc.caller.ctx.writeAndFlush(fwdError);                
             }
@@ -498,7 +503,7 @@ public class WampRouter {
             }
             handler.providedProcedures.put(procInfo.registrationId, procInfo);
             
-            RegisteredMessage response = new RegisteredMessage(reg.requestId, procInfo.registrationId);
+            RegisteredMessage response = new RegisteredMessage(reg.requestId, RegistrationId.of( procInfo.registrationId ));
             handler.ctx.writeAndFlush(response);
         } else if (msg instanceof UnregisterMessage) {
             // The client wants to unregister a procedure
@@ -535,7 +540,7 @@ public class WampRouter {
             for (Invocation invoc : proc.pendingCalls) {
                 handler.pendingInvocations.remove(invoc.invocationRequestId);
                 if (invoc.caller.state == RouterHandlerState.Open) {
-                    ErrorMessage errMsg = new ErrorMessage(CallMessage.ID, invoc.callRequestId, 
+                    ErrorMessage errMsg = new ErrorMessage(CallMessage.ID, RequestId.of( invoc.callRequestId ), 
                         null, ApplicationError.NO_SUCH_PROCEDURE, null, null);
                     invoc.caller.ctx.writeAndFlush(errMsg);
                 }
@@ -596,7 +601,7 @@ public class WampRouter {
             }
             handler.subscriptions.put(subscriptionId, s);
             
-            SubscribedMessage response = new SubscribedMessage(sub.requestId, subscriptionId);
+            SubscribedMessage response = new SubscribedMessage(sub.requestId, SubscriptionId.of( subscriptionId ) );
             handler.ctx.writeAndFlush(response);
         } else if (msg instanceof UnsubscribeMessage) {
             // The client wants to cancel a subscription
@@ -673,7 +678,7 @@ public class WampRouter {
                 return;
             }
             
-            long publicationId = IdGenerator.newRandomId(null); // Store that somewhere?
+            PublicationId publicationId = PublicationId.of( IdGenerator.newRandomId(null) ); // Store that somewhere?
 
             // Get the subscriptions for this topic on the realm
             Set<Subscription> subscriptionSet = handler.realm.subscriptions.get(pub.topic);
@@ -681,7 +686,7 @@ public class WampRouter {
                 for (Subscription subscriber : subscriptionSet) {
                     if (subscriber.subscriber == handler) continue; // Skip the publisher
                     // Publish the event to the subscriber
-                    EventMessage ev = new EventMessage(subscriber.subscriptionId, publicationId,
+                    EventMessage ev = new EventMessage(SubscriptionId.of( subscriber.subscriptionId ), publicationId,
                         null, pub.arguments, pub.argumentsKw);
                     subscriber.subscriber.ctx.writeAndFlush(ev);
                 }
@@ -758,7 +763,7 @@ public class WampRouter {
         }
         
         // Respond with the WELCOME message
-        WelcomeMessage welcome = new WelcomeMessage(channelHandler.sessionId, welcomeDetails);
+        WelcomeMessage welcome = new WelcomeMessage(SessionId.of( channelHandler.sessionId ), welcomeDetails);
         channelHandler.ctx.writeAndFlush(welcome);
     }
     

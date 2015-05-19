@@ -25,6 +25,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ws.wamp.jawampa.auth.client.ClientSideAuthentication;
 import ws.wamp.jawampa.internal.UriValidator;
 import ws.wamp.jawampa.transport.WampClientChannelFactory;
@@ -37,7 +40,8 @@ import ws.wamp.jawampa.transport.WampClientChannelFactoryResolver;
  * a client can be created with the {@link #build build()} method.
  */
 public class WampClientBuilder {
-    
+    private static final Logger log = LoggerFactory.getLogger( WampClientBuilder.class );
+
     String uri;
     String realm;
     SslContext sslContext;
@@ -57,6 +61,7 @@ public class WampClientBuilder {
      * Construct a new WampClientBuilder object.
      */
     public WampClientBuilder() {
+        log.info( "WampClientBuilder" );
         // Add the default roles
         roles.add(WampRoles.Caller);
         roles.add(WampRoles.Callee);
@@ -96,30 +101,11 @@ public class WampClientBuilder {
             throw new ApplicationError(ApplicationError.INVALID_ROLES);
         }
         
-        // Build the roles array from the roles set
-        WampRoles[] rolesArray = new WampRoles[roles.size()];
-        int i = 0;
-        for (WampRoles r : roles) {
-            rolesArray[i] = r;
-            i++;
-        }
-        
         WampClientChannelFactory channelFactory = 
             WampClientChannelFactoryResolver.getFactory(routerUri, sslContext);
         
-        return new WampClient(routerUri, realm, rolesArray, closeOnErrors, 
+        return new WampClientImpl( realm, roles, closeOnErrors, 
                 channelFactory, nrReconnects, reconnectInterval, authId, authMethods);
-    }
-    
-    /**
-     * Sets the address of the router to which the new client shall connect.
-     * @param uri The address of the router, e.g. ws://wamp.ws/ws
-     * @return The {@link WampClientBuilder} object
-     * @deprecated This method existed only due to a typo will be removed
-     */
-    public WampClientBuilder witUri(String uri) {
-        this.uri = uri;
-        return this;
     }
     
     /**
@@ -150,7 +136,7 @@ public class WampClientBuilder {
      * At least one role is required, otherwise the session can not be established.
      * @return The {@link WampClientBuilder} object
      */
-    public WampClientBuilder withRoles(WampRoles[] roles) {
+    public WampClientBuilder withRoles(WampRoles... roles) {
         this.roles.clear();
         if (roles == null) return this; // Will throw on build()
         for (WampRoles role : roles) {

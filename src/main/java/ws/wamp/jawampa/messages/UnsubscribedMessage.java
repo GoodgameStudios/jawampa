@@ -2,18 +2,29 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.ids.RequestId;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 /**
  * Acknowledge sent by a Broker to a Subscriber to acknowledge
  * unsubscription. [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
  */
-public class UnsubscribedMessage extends RegisteredMessage {
-    public final static int ID = 35;
+public class UnsubscribedMessage extends WampMessage {
+    public static final MessageCode ID = MessageCode.UNSUBSCRIBED;
 
-    public UnsubscribedMessage(long requestId) {
-        super(ID, requestId);
+    public final RequestId requestId;
+
+    public UnsubscribedMessage(RequestId requestId) {
+        this.requestId = requestId;
+    }
+
+    public ArrayNode toObjectArray(ObjectMapper mapper) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( requestId )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {
@@ -23,9 +34,14 @@ public class UnsubscribedMessage extends RegisteredMessage {
                     || !messageNode.get(1).canConvertToLong())
                 throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-            long requestId = messageNode.get(1).asLong();
+            RequestId requestId = RequestId.of( messageNode.get(1).asLong() );
 
             return new UnsubscribedMessage(requestId);
         }
+    }
+
+    @Override
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onUnsubscribed( this );
     }
 }

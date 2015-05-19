@@ -2,8 +2,10 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.ids.RegistrationId;
+import ws.wamp.jawampa.ids.RequestId;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
@@ -13,21 +15,21 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
  * 
  */
 public class UnregisterMessage extends WampMessage {
-    public final static int ID = 66;
-    public final long requestId;
-    public final long registrationId;
+    public static final MessageCode ID = MessageCode.UNREGISTER;
 
-    public UnregisterMessage(long requestId, long registrationId) {
+    public final RequestId requestId;
+    public final RegistrationId registrationId;
+
+    public UnregisterMessage(RequestId requestId, RegistrationId registrationId) {
         this.requestId = requestId;
         this.registrationId = registrationId;
     }
 
-    public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-        ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
-        messageNode.add(requestId);
-        messageNode.add(registrationId);
-        return messageNode;
+    public ArrayNode toObjectArray(ObjectMapper mapper) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( requestId )
+                .add( registrationId )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {
@@ -42,7 +44,12 @@ public class UnregisterMessage extends WampMessage {
             long requestId = messageNode.get(1).asLong();
             long registrationId = messageNode.get(2).asLong();
 
-            return new UnregisterMessage(requestId, registrationId);
+            return new UnregisterMessage(RequestId.of( requestId ), RegistrationId.of( registrationId ) );
         }
+    }
+
+    @Override
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onUnregister( this );
     }
 }

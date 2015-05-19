@@ -2,8 +2,9 @@ package ws.wamp.jawampa.messages;
 
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampError;
+import ws.wamp.jawampa.ids.RequestId;
+import ws.wamp.jawampa.messages.handling.MessageHandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -15,14 +16,15 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * Options|dict, Topic|uri, Arguments|list, ArgumentsKw|dict]
  */
 public class PublishMessage extends WampMessage {
-    public final static int ID = 16;
-    public final long requestId;
+    public static final MessageCode ID = MessageCode.PUBLISH;
+
+    public final RequestId requestId;
     public final ObjectNode options;
     public final String topic;
     public final ArrayNode arguments;
     public final ObjectNode argumentsKw;
 
-    public PublishMessage(long requestId, ObjectNode options, String topic,
+    public PublishMessage(RequestId requestId, ObjectNode options, String topic,
             ArrayNode arguments, ObjectNode argumentsKw) {
         this.requestId = requestId;
         this.options = options;
@@ -31,22 +33,14 @@ public class PublishMessage extends WampMessage {
         this.argumentsKw = argumentsKw;
     }
 
-    public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-        ArrayNode messageNode = mapper.createArrayNode();
-        messageNode.add(ID);
-        messageNode.add(requestId);
-        if (options != null)
-            messageNode.add(options);
-        else
-            messageNode.add(mapper.createObjectNode());
-        messageNode.add(topic.toString());
-        if (arguments != null)
-            messageNode.add(arguments);
-        else if (argumentsKw != null)
-            messageNode.add(mapper.createArrayNode());
-        if (argumentsKw != null)
-            messageNode.add(argumentsKw);
-        return messageNode;
+    public ArrayNode toObjectArray(ObjectMapper mapper) throws WampError {
+        return new MessageNodeBuilder( mapper, ID )
+                .add( requestId )
+                .add( options )
+                .add( topic )
+                .add( arguments )
+                .add( argumentsKw )
+                .build();
     }
 
     static class Factory implements WampMessageFactory {
@@ -58,7 +52,7 @@ public class PublishMessage extends WampMessage {
                     || !messageNode.get(3).isTextual())
                 throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-            long requestId = messageNode.get(1).asLong();
+            RequestId requestId = RequestId.of( messageNode.get(1).asLong() );
             ObjectNode options = (ObjectNode) messageNode.get(2);
             String topic = messageNode.get(3).asText();
             ArrayNode arguments = null;
@@ -78,5 +72,10 @@ public class PublishMessage extends WampMessage {
             return new PublishMessage(requestId, options, topic, arguments,
                     argumentsKw);
         }
+    }
+
+    @Override
+    public void onMessage( MessageHandler messageHandler ) {
+        messageHandler.onPublish( this );
     }
 }
