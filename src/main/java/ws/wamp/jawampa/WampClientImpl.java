@@ -37,7 +37,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /*
  * TODO:
- * - missing roles
  * - reconnect
  * - check connection state ( messages during session establishment vs messages with established session )
  */
@@ -65,7 +64,6 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
 
     public WampClientImpl( String realm, Set<WampRoles> roles, boolean closeOnErrors, WampClientChannelFactory channelFactory,
             int nrReconnects, int reconnectInterval, String authId, List<ClientSideAuthentication> authMethods ) {
-        // TODO Auto-generated constructor stub
         connection = new NettyConnection( channelFactory, this );
 
         callee = roles.contains( WampRoles.Callee ) ? new Callee( this ) : null;
