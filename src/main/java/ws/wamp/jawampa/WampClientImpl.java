@@ -141,14 +141,14 @@ public class WampClientImpl implements WampClient, BaseClient, HasConnectionStat
 
         return new Procedure.Builder( connection.executor(), callee, procedure );
     }
-
+    
     @Override
     public Subscription.Builder startSubscribing( final String topic ) {
         if ( !roles.contains( WampRoles.Subscriber ) ) {
             throw new IllegalStateException( "You are not a subscriber!" );
         }
 
-        return new Subscription.Builder( connection.executor(), subscriber, topic );
+        return new Subscription.Builder( connection.executor(), mapper, subscriber, topic );
     }
 
     @Override

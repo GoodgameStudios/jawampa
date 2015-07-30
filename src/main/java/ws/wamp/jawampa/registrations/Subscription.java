@@ -1,5 +1,7 @@
 package ws.wamp.jawampa.registrations;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 
@@ -34,17 +36,23 @@ public class Subscription {
 
     public static class Builder {
         private final Executor executor;
+        private final ObjectMapper mapper;
+        
         private final Subscriber subscriber;
-        private String topic;
+        
+        private final String topic;
 
+        private ObjectNode options;
         private Action1<Throwable> onError;
         private Action0 onFinished;
         private Action1<PubSubData> onEvent;
-
-        public Builder( Executor executor, Subscriber subscriber, String topic ) {
+        
+        public Builder( Executor executor, ObjectMapper mapper, Subscriber subscriber, String topic ) {
             this.executor = Objects.requireNonNull( executor );
+            this.mapper = Objects.requireNonNull( mapper );
             this.subscriber = Objects.requireNonNull( subscriber );
             this.topic = Objects.requireNonNull( topic );
+            this.options = null;
         }
 
         public Builder onError( Action1<Throwable> onError ) {
@@ -62,6 +70,30 @@ public class Subscription {
             return this;
         }
 
+        private void makeSureOptionsExist() {
+            if ( options == null ) {
+                options = mapper.createObjectNode();
+            }            
+        }
+        
+        public Builder withOption( String optionName, boolean optionValue ) {
+            makeSureOptionsExist();
+            options.put( optionName, optionValue );
+            return this;
+        }
+        
+        public Builder withOption( String optionName, String optionValue ) {
+            makeSureOptionsExist();
+            options.put( optionName, optionValue );
+            return this;
+        }
+        
+        public Builder withOption( String optionName, int optionValue ) {
+            makeSureOptionsExist();
+            options.put( optionName, optionValue );
+            return this;
+        }
+        
         public Subscription subscribe() {
             if ( onError == null || onFinished == null || onEvent == null ) {
                 throw new IllegalStateException( "You must call each of onError, onFinished and onEvent before calling register!" );
@@ -88,7 +120,7 @@ public class Subscription {
             executor.execute( new Runnable() {
                 @Override
                 public void run() {
-                    subscriber.subscribe( topic, resultSubject );
+                    subscriber.subscribe( topic, options, resultSubject );
                 }
             });
 

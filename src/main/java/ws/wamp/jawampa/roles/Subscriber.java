@@ -1,5 +1,6 @@
 package ws.wamp.jawampa.roles;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -56,6 +57,10 @@ public class Subscriber extends BaseMessageHandler {
     }
 
     public void subscribe( final String topic, final PublishSubject<PubSubData> resultSubject ) {
+        subscribe( topic, null, resultSubject );
+    }
+    
+    public void subscribe( final String topic, final ObjectNode options, final PublishSubject<PubSubData> resultSubject ) {
         AsyncSubject<SubscriptionId> registrationSubject = AsyncSubject.create();
         registrationSubject.subscribe( new Observer<SubscriptionId>() {
             @Override
@@ -84,7 +89,7 @@ public class Subscriber extends BaseMessageHandler {
         registrationTracker.sendRequest( registrationSubject, new MessageFactory() {
             @Override
             public WampMessage fromRequestId( RequestId requestId ) {
-                return new SubscribeMessage( requestId, null, topic );
+                return new SubscribeMessage( requestId, options, topic );
             }
         } );
     }
