@@ -16,6 +16,10 @@
 
 package ws.wamp.jawampa;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Possible roles for WAMP peers
  */
@@ -24,21 +28,31 @@ public enum WampRoles {
     Callee("callee"),
     Caller("caller"),
     Publisher("publisher"),
-    Subscriber("subscriber"),
+    Subscriber("subscriber", Arrays.asList( "pattern_based_subscription" )),
     Dealer("dealer"),
     Broker("broker");
     
     private final String stringValue;
-    
+    private final List<String> capabilities;
+
     WampRoles(String stringValue) {
-        this.stringValue = stringValue;
+        this(stringValue, Collections.emptyList());
     }
-    
+
+    WampRoles(String stringValue, List<String> capabilities) {
+        this.stringValue = stringValue;
+        this.capabilities = capabilities;
+    }
+
     @Override
     public String toString() {
         return stringValue;
     }
     
+    public List<String> getCapabilities() {
+        return capabilities;
+    }
+
     public static WampRoles fromString(String role) {
         if (role == null) return null;
         else if (role.equals("callee")) return Callee;

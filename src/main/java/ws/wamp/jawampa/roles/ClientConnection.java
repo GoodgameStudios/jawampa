@@ -85,7 +85,10 @@ public class ClientConnection extends BaseMessageHandler {
         ObjectNode detailsNode = mapper.createObjectNode();
         ObjectNode rolesNode = detailsNode.putObject("roles");
         for ( WampRoles role : roles ) {
-            rolesNode.putObject( role.toString() );
+            ObjectNode roleNode = rolesNode.putObject( role.toString() );
+            for ( String capability : role.getCapabilities() ) {
+                roleNode.put(capability, true);
+            }
         }
         if (authId != null) {
             detailsNode.put( "authid", authId );
